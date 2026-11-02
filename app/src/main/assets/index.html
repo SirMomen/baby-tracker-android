@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6750a4">
+<title>Baby Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-48.png" sizes="48x48" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #fdf8ff; --surface: #ffffff; --text: #1d1b20; --muted: #6b6573;
+    --primary: #6750a4; --on-primary: #ffffff; --tonal: #e8def8; --on-tonal: #1d192b;
+    --border: #e3dde9; --danger: #b3261e; --danger-bg: #f9dedc; --ok: #386a20;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141218; --surface: #211f26; --text: #e6e0e9; --muted: #a9a3b0;
+      --primary: #cfbcff; --on-primary: #381e72; --tonal: #4a4458; --on-tonal: #e8def8;
+      --border: #3a3640; --danger: #f2b8b5; --danger-bg: #4a2523; --ok: #a3d98f;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 10px;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 10px; border-bottom: 1px solid var(--border); }
+  header img { width: 34px; height: 34px; border-radius: 9px; flex: none; }
+  header h1 { margin: 0; font-size: 20px; }
+  main { padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); max-width: 640px; margin: 0 auto; }
+  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; background: var(--surface);
+    border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); }
+  nav button { flex: 1; border: 0; background: none; color: var(--muted); padding: 10px 0 8px; font: inherit; font-size: 12px; }
+  nav button span { display: block; font-size: 22px; line-height: 1.2; }
+  nav button.on { color: var(--primary); font-weight: 600; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px; }
+  .sum .e { font-size: 26px; } .sum .l { font-size: 12px; color: var(--muted); }
+  .sum .a { font-weight: 600; margin-top: 2px; } .sum .c { font-size: 12px; color: var(--muted); }
+  button { font: inherit; cursor: pointer; }
+  .btn { border: 0; border-radius: 999px; padding: 10px 14px; background: var(--tonal); color: var(--on-tonal); font-weight: 600; }
+  .btn.primary { background: var(--primary); color: var(--on-primary); }
+  .btn.ghost { background: none; color: var(--primary); }
+  .btn.danger { background: var(--danger-bg); color: var(--danger); }
+  .logbtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .logbtns .btn { padding: 12px 4px; font-size: 14px; }
+  h3.day { margin: 16px 4px 6px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .entry { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); }
+  .entry .e { font-size: 24px; } .entry .m { flex: 1; min-width: 0; }
+  .entry .t { font-size: 12px; color: var(--muted); } .entry .d { overflow-wrap: anywhere; }
+  .icon { border: 0; background: none; color: var(--muted); font-size: 18px; padding: 8px; border-radius: 50%; }
+  .empty { color: var(--muted); padding: 24px 8px; text-align: center; }
+  .banner { background: var(--danger-bg); color: var(--danger); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px;
+    display: flex; gap: 8px; align-items: center; font-size: 14px; }
+  .banner .btn { flex: none; padding: 8px 12px; background: var(--surface); color: var(--text); }
+  .ti { font-weight: 600; } .s { font-size: 13px; color: var(--muted); }
+  .rem { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .rem .m { flex: 1; min-width: 0; }
+  .med { margin-bottom: 8px; }
+  .med .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .med .actions .btn { padding: 8px 12px; font-size: 14px; }
+  .switch { position: relative; width: 48px; height: 28px; flex: none; }
+  .switch input { opacity: 0; width: 100%; height: 100%; margin: 0; position: absolute; inset: 0; z-index: 1; cursor: pointer; }
+  .switch i { position: absolute; inset: 0; background: var(--border); border-radius: 999px; transition: .15s; }
+  .switch i::after { content: ""; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .15s; }
+  .switch input:checked + i { background: var(--primary); }
+  .switch input:checked + i::after { transform: translateX(20px); }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; align-items: center; }
+  .note { font-size: 13px; color: var(--muted); margin: 4px 4px 12px; }
+  .fab { position: fixed; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 6; width: 56px; height: 56px; border-radius: 16px;
+    border: 0; background: var(--primary); color: var(--on-primary); font-size: 30px; box-shadow: 0 3px 10px rgba(0,0,0,.3); }
+  dialog { border: 0; border-radius: 24px; padding: 20px; width: min(92vw, 420px); max-height: 90vh; overflow-y: auto; background: var(--surface); color: var(--text); }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog h2 { margin: 0 0 12px; font-size: 20px; }
+  dialog label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0; }
+  dialog input[type=text], dialog input[type=number], dialog input[type=datetime-local], dialog input:not([type]), dialog select {
+    display: block; width: 100%; margin-top: 4px; padding: 10px 12px; font: inherit; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 12px; }
+  dialog label.inl { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 14px; }
+  dialog label.inl input { width: auto; margin: 0; }
+  .lbl { font-size: 13px; color: var(--muted); margin: 12px 0 2px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 4px; }
+  .two input, .two select { margin-top: 0 !important; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip span, .chipbtn { display: inline-block; padding: 7px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px;
+    color: var(--text); background: none; }
+  .chip input:checked + span, .chipbtn.sel { background: var(--tonal); color: var(--on-tonal); border-color: transparent; font-weight: 600; }
+  .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  #alarm { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; padding: 16px; }
+  #alarm.on { display: flex; }
+  #alarm .box { background: var(--surface); border-radius: 24px; padding: 20px; width: min(94vw, 420px); max-height: 88vh; overflow: auto; }
+  #alarm h2 { margin: 0 0 4px; } #alarm .ar { padding: 12px 0; border-top: 1px solid var(--border); }
+  #alarm .ar:first-of-type { border-top: 0; }
+  #alarm .big { font-size: 18px; font-weight: 700; } #alarm .sm { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  @keyframes pulse { 50% { transform: scale(1.12); } }
+  #alarm .bell { font-size: 40px; display: inline-block; animation: pulse 1s infinite; }
+</style>
+</head>
+<body>
+<header><img src="icon.svg" alt="" width="34" height="34"><h1 id="title">Baby Tracker</h1></header>
+<main id="app"></main>
+<button class="fab" id="fab" aria-label="Add" hidden>＋</button>
+<nav>
+  <button data-act="tab" data-tab="today"><span>📋</span>Today</button>
+  <button data-act="tab" data-tab="meds"><span>💊</span>Medicines</button>
+  <button data-act="tab" data-tab="reminders"><span>⏰</span>Reminders</button>
+</nav>
+<dialog id="dlg"></dialog>
+<div id="alarm" role="alertdialog" aria-live="assertive"></div>
+
+<script>
+"use strict";
+const T = {
+  feeding:    { label: "Feeding",    emoji: "🍼", note: "Time to feed the baby" },
+  diaper:     { label: "Diaper",     emoji: "🧷", note: "Time for a diaper check" },
+  medication: { label: "Medication", emoji: "💊", note: "Time for medication" },
+};
+const TITLES = { today: "Baby Tracker", meds: "Medicines", reminders: "Reminders" };
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+let entries = load("bt_entries", []);      // {id,type,time,detail,medId}
+let reminders = load("bt_reminders", []);  // {id,type,label,medId,intervalMin,enabled,fixed,nextAt,snoozeUntil}
+let meds = load("bt_meds", []);            // {id,name,dose,note}
+let tab = "today";
+let ringing = [];                          // reminder ids currently alarming (or "test")
+
+const uid = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
+const saveEntries = () => save("bt_entries", entries);
+const NB = window.BabyNative || null;      // present only inside the Android wrapper app
+const saveReminders = () => { save("bt_reminders", reminders); nativeSync(); };
+const saveMeds = () => { save("bt_meds", meds); nativeSync(); };
+const due = r => r.snoozeUntil || r.nextAt;
+const medText = m => [m.name, m.dose].filter(Boolean).join(" ");
+const medDetailFor = r => { const m = meds.find(x => x.id === r.medId); return m ? medText(m) : r.label; };
+const noteFor = r => r.type === "medication" ? "Time for " + medDetailFor(r) : T[r.type].note;
+
+// ---------- formatting ----------
+function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function ago(t) {
+  const m = Math.max(0, Math.floor((Date.now() - t) / 60000));
+  if (m < 1) return "just now";
+  if (m < 60) return m + "m ago";
+  return Math.floor(m / 60) + "h " + (m % 60) + "m ago";
+}
+function clock(t) { return new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+function fmtTime(t) {
+  const s = startOfToday();
+  if (t >= s && t < s + 864e5) return clock(t);
+  return new Date(t).toLocaleDateString([], { month: "short", day: "numeric" }) + " " + clock(t);
+}
+function dayLabel(t) {
+  const s = startOfToday();
+  if (t >= s) return "Today";
+  if (t >= s - 864e5) return "Yesterday";
+  return new Date(t).toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+}
+function fmtInt(min) {
+  if (min < 60) return min + " min";
+  if (min % 60 === 0) { const h = min / 60; return h >= 48 && h % 24 === 0 ? (h / 24) + " days" : h + " h"; }
+  return Math.floor(min / 60) + " h " + (min % 60) + " min";
+}
+function localDT(t) {
+  const d = new Date(t - new Date(t).getTimezoneOffset() * 60000);
+  return d.toISOString().slice(0, 16);
+}
+
+// ---------- data actions ----------
+function addEntry(type, detail, time, medId) {
+  entries.push({ id: uid(), type, time, detail, medId: medId || null });
+  entries.sort((a, b) => b.time - a.time);
+  saveEntries();
+  // Restart interval-style reminders so they count from the last event.
+  // Fixed-time reminders keep their schedule.
+  const now = Date.now();
+  reminders.forEach(r => {
+    if (!r.enabled || r.type !== type || r.fixed) return;
+    if (type === "medication" && r.medId && r.medId !== medId) return;
+    let next = time + r.intervalMin * 60000;
+    if (next <= now) next = now + r.intervalMin * 60000;
+    r.nextAt = next; r.snoozeUntil = 0;
+    ringing = ringing.filter(id => id !== r.id);
+  });
+  saveReminders();
+  renderAlarm();
+  render();
+}
+// move a fixed schedule on to its next slot after now, or restart an interval from now
+function advance(r) {
+  const now = Date.now(), step = r.intervalMin * 60000;
+  r.snoozeUntil = 0;
+  if (r.fixed) { if (r.nextAt <= now) r.nextAt += Math.ceil((now - r.nextAt + 1) / step) * step; }
+  else r.nextAt = now + step;
+}
+function doDone(rid) {
+  ringing = ringing.filter(x => x !== rid);
+  const r = reminders.find(x => x.id === rid);
+  if (r && due(r) <= Date.now() + 1000) {
+    addEntry(r.type, r.type === "medication" ? medDetailFor(r) : "Marked done from reminder", Date.now(), r.medId);
+    advance(r);
+    saveReminders();
+  }
+  renderAlarm(); render();
+}
+function doSnooze(rid) {
+  ringing = ringing.filter(x => x !== rid);
+  const r = reminders.find(x => x.id === rid);
+  if (r && due(r) <= Date.now() + 1000) { r.snoozeUntil = Date.now() + 10 * 60000; saveReminders(); }
+  renderAlarm(); render();
+}
+
+// ---------- rendering ----------
+function render() {
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  $("#fab").hidden = tab === "today";
+  $("#fab").setAttribute("aria-label", tab === "meds" ? "Add medicine" : "Add reminder");
+  $("#app").innerHTML = tab === "today" ? viewToday() : tab === "meds" ? viewMeds() : viewReminders();
+  $("#title").textContent = TITLES[tab];
+}
+
+function viewToday() {
+  const s = startOfToday();
+  let h = '<div class="grid3">';
+  for (const k of Object.keys(T)) {
+    const last = entries.find(e => e.type === k);
+    const n = entries.filter(e => e.type === k && e.time >= s).length;
+    h += `<div class="card sum"><div class="e">${T[k].emoji}</div><div class="l">${T[k].label}</div>
+      <div class="a">${last ? ago(last.time) : "—"}</div><div class="c">${n} today</div></div>`;
+  }
+  h += '</div><div class="logbtns">';
+  for (const k of Object.keys(T)) h += `<button class="btn" data-act="log" data-type="${k}">${T[k].emoji} Log</button>`;
+  h += "</div>";
+  if (!entries.length) return h + '<div class="empty">Nothing logged yet.<br>Tap a button above to log a feed, diaper change or dose.</div>';
+  let lastDay = "";
+  for (const e of entries.slice(0, 300)) {
+    const d = dayLabel(e.time);
+    if (d !== lastDay) { h += `<h3 class="day">${esc(d)}</h3>`; lastDay = d; }
+    h += `<div class="entry"><div class="e">${T[e.type].emoji}</div>
+      <div class="m"><div class="d">${esc(T[e.type].label)}${e.detail ? " · " + esc(e.detail) : ""}</div>
+      <div class="t">${clock(e.time)}</div></div>
+      <button class="icon" data-act="del-entry" data-id="${e.id}" aria-label="Delete entry">🗑</button></div>`;
+  }
+  return h;
+}
+
+function viewMeds() {
+  if (!meds.length) return '<div class="empty">No medicines yet.<br>Tap ＋ to add one (name, dose, notes). It will then show up when you log medication.</div>';
+  return meds.map(m => `<div class="card med"><div class="ti">💊 ${esc(m.name)}</div>
+    <div class="s">${esc([m.dose, m.note].filter(Boolean).join(" · ") || "No dose set")}</div>
+    <div class="actions">
+      <button class="btn primary" data-act="med-log" data-id="${m.id}">Log</button>
+      <button class="btn" data-act="med-rem" data-id="${m.id}">⏰ Reminder</button>
+      <button class="btn ghost" data-act="med-edit" data-id="${m.id}">Edit</button>
+      <button class="btn ghost" data-act="med-del" data-id="${m.id}">Delete</button>
+    </div></div>`).join("");
+}
+
+function viewReminders() {
+  let h = "";
+  if (NB) {
+    if (!nbPerm()) h += `<div class="banner"><div style="flex:1">Allow notifications so reminders can alert you at the alarm time.</div>
+      <button class="btn" data-act="nnotif">Allow</button></div>`;
+  } else if (!("Notification" in window)) {
+    h += `<div class="banner">This browser can't show notifications. Alarms still ring inside the app while it is open.</div>`;
+  } else if (Notification.permission === "default") {
+    h += `<div class="banner"><div style="flex:1">Allow notifications so reminders can alert you at the alarm time.</div>
+      <button class="btn" data-act="notif">Allow</button></div>`;
+  } else if (Notification.permission === "denied") {
+    h += `<div class="banner">Notifications are blocked. Turn them on for this site/app in your phone or browser settings.</div>`;
+  }
+  h += `<div class="tools"><button class="btn" data-act="test">🔔 Test alarm</button>
+    <button class="btn" data-act="test-notif">📣 Test notification</button>
+    <label style="display:flex;align-items:center;gap:8px;font-size:14px">
+      <span class="switch"><input type="checkbox" data-act="wake" ${load("bt_wake", false) ? "checked" : ""}><i></i></span> Keep screen on</label></div>
+    <div class="note">${NB ? "Alarms are scheduled on your phone, so you get a notification at the alarm time even when the app is closed. Tap the notification to open the alarm, then press Done or Snooze." : "Alarms and notifications fire at the alarm time while this app is open or running in the background. A web app can't wake itself once it's fully closed, so keep it open (turn on \"Keep screen on\" overnight). Anything that came due while closed rings as soon as you open it."}</div>`;
+  h += diagHtml();
+  if (!reminders.length) return h + '<div class="empty">No reminders yet.<br>Tap ＋ to add a repeating alarm, e.g. feeding every 3 hours or a medicine every 12 hours.</div>';
+  for (const r of reminders) {
+    h += `<div class="card rem"><div class="m"><div class="ti">${T[r.type].emoji} ${esc(r.label)}</div>
+      <div class="s">Every ${fmtInt(r.intervalMin)}${r.fixed ? " · fixed times" : ""}${r.enabled ? " · next " + fmtTime(due(r)) + (r.snoozeUntil ? " (snoozed)" : "") : " · off"}</div></div>
+      <span class="switch"><input type="checkbox" data-act="toggle" data-id="${r.id}" ${r.enabled ? "checked" : ""}><i></i></span>
+      <button class="icon" data-act="del-rem" data-id="${r.id}" aria-label="Delete reminder">🗑</button></div>`;
+  }
+  return h;
+}
+
+// ---------- native Android bridge (only inside the Android wrapper app) ----------
+function nbPerm() { try { return NB.hasNotificationPermission(); } catch (e) { return true; } }
+function nativeSync() {
+  if (!NB) return;
+  try {
+    const now = Date.now(), horizon = now + 72 * 3600e3, items = [];
+    reminders.forEach(r => {
+      if (!r.enabled) return;
+      const step = Math.max(60000, r.intervalMin * 60000);
+      let t = due(r);
+      if (t <= now) t += Math.ceil((now - t + 1) / step) * step;   // current one is already ringing in the app
+      for (let n = 0; n < 48 && t <= horizon; n++, t += step)
+        items.push({ time: t, title: T[r.type].emoji + " " + r.label, body: noteFor(r) });
+    });
+    items.sort((a, b) => a.time - b.time);
+    NB.schedule(JSON.stringify(items.slice(0, 300)));
+  } catch (e) {}
+}
+function nativeDiag() {
+  const ok = nbPerm();
+  return `<div class="card" style="margin-bottom:10px"><div class="ti">Notification check</div>
+    <div class="s" style="margin:6px 0">
+      <div style="display:flex;justify-content:space-between"><span>Android alarms</span><span>ready ✓</span></div>
+      <div style="display:flex;justify-content:space-between"><span>Notification permission</span><span>${ok ? "allowed ✓" : "not allowed ✗"}</span></div></div>
+    <div style="font-size:13px">${ok ? "Alarms are scheduled by Android, so they fire even when the app is closed. Press “Test notification” to check. If nothing shows, check Do Not Disturb and that battery saver isn't restricting the app."
+      : "Tap Allow above and accept the prompt. If no prompt appears, open Android Settings → Apps → Baby Tracker → Notifications and turn them on."}</div></div>`;
+}
+
+// ---------- notification status check ----------
+let swReg = "checking";
+function checkSW() {
+  if (!("serviceWorker" in navigator)) { swReg = "none"; return; }
+  navigator.serviceWorker.getRegistration().then(r => { swReg = r ? "ok" : "none"; if (tab === "reminders" && !dlg.open) render(); }, () => { swReg = "none"; });
+}
+function diagHtml() {
+  if (NB) return nativeDiag();
+  const api = "Notification" in window;
+  const perm = api ? Notification.permission : "unsupported";
+  const rows = [
+    ["Page address", location.protocol === "file:" ? "local file ✗" : location.protocol === "https:" || location.hostname === "localhost" ? "secure ✓" : "not secure (http) ✗"],
+    ["Notification support", api ? "yes ✓" : "no ✗"],
+    ["Permission", api ? (perm === "granted" ? "allowed ✓" : perm === "denied" ? "blocked ✗" : "not asked yet") : "—"],
+    ["Background helper", swReg === "ok" ? "running ✓" : swReg === "checking" ? "checking…" : "not running ✗"],
+  ];
+  let why;
+  if (location.protocol === "file:") why = "This page was opened as a local file. Browsers block notifications there. Upload the folder to an https website (GitHub Pages, Netlify, etc.) and open that address.";
+  else if (!api) why = "This browser or app has no notification support. This is typical of APK/“website to app” wrappers and in-app browsers. Open the site in Chrome (or Safari on iPhone, after “Add to Home Screen”) instead.";
+  else if (!window.isSecureContext) why = "Notifications need an https address. Host the app on an https site.";
+  else if (perm === "denied") why = "Notifications are blocked. In Chrome tap the lock/ⓘ icon next to the address, then Permissions → Notifications → Allow. For an installed app: Android Settings → Apps → this app → Notifications.";
+  else if (perm === "default") why = "Tap Allow above, then accept the prompt.";
+  else if (swReg === "none") why = "Notifications are allowed but the background helper isn't running, so alerts may not appear. Reload the page once.";
+  else why = "Everything is set. Press “Test notification”. If nothing appears, check phone Settings → Notifications for the browser/app, Do Not Disturb, and battery saver.";
+  return `<div class="card" style="margin-bottom:10px"><div class="ti">Notification check</div>
+    <div class="s" style="margin:6px 0">${rows.map(r => `<div style="display:flex;justify-content:space-between;gap:8px"><span>${r[0]}</span><span>${r[1]}</span></div>`).join("")}</div>
+    <div style="font-size:13px">${esc(why)}</div></div>`;
+}
+
+// ---------- dialogs ----------
+const dlg = $("#dlg");
+function chips(name, items, checkedIdx) {
+  return '<div class="chips">' + items.map((it, i) =>
+    `<label class="chip"><input type="radio" name="${name}" value="${esc(it.v)}" ${i === checkedIdx ? "checked" : ""}><span>${esc(it.t)}</span></label>`
+  ).join("") + "</div>";
+}
+function openDialog(html, onSubmit) {
+  dlg.innerHTML = `<form>${html}</form>`;
+  const f = $("form", dlg);
+  f.addEventListener("submit", e => { e.preventDefault(); if (onSubmit(f) !== false) dlg.close(); });
+  const c = $("[data-cancel]", dlg); if (c) c.onclick = () => dlg.close();
+  dlg.showModal();
+  return f;
+}
+const buttons = ok => `<div class="row"><button type="button" class="btn ghost" data-cancel>Cancel</button><button class="btn primary">${ok}</button></div>`;
+
+function openLog(type) {
+  if (type === "medication") return openLogMed();
+  const opts = {
+    feeding: ["Breast – left", "Breast – right", "Bottle", "Formula", "Solids"],
+    diaper: ["Wet", "Dirty", "Wet + dirty", "Dry (clean)"],
+  }[type];
+  const hint = { feeding: "Amount / duration (e.g. 90 ml, 10 min)", diaper: "Note (optional)" }[type];
+  openDialog(`<h2>${T[type].emoji} Log ${T[type].label.toLowerCase()}</h2>
+    ${chips("opt", opts.map(o => ({ v: o, t: o })), 0)}
+    <label>${hint}<input type="text" name="txt" autocomplete="off"></label>
+    <label>Time<input type="datetime-local" name="when" value="${localDT(Date.now())}" required></label>
+    ${buttons("Save")}`,
+    f => {
+      const detail = [f.elements.opt.value, f.elements.txt.value.trim()].filter(Boolean).join(" · ");
+      let t = new Date(f.elements.when.value).getTime();
+      if (!isFinite(t)) t = Date.now();
+      addEntry(type, detail, Math.min(t, Date.now()));
+    });
+}
+
+function openLogMed(preId) {
+  const items = meds.map(m => ({ v: String(m.id), t: m.name })).concat([{ v: "new", t: "＋ New medicine" }]);
+  let idx = preId ? meds.findIndex(m => m.id === preId) : 0;
+  if (idx < 0 || !meds.length) idx = items.length - 1;
+  const f = openDialog(`<h2>💊 Log medication</h2>
+    <div class="lbl" style="margin-top:0">Which medicine?</div>
+    ${chips("med", items, idx)}
+    <div id="newMed"><label>Medicine name<input type="text" name="mname" autocomplete="off"></label>
+      <label class="inl"><input type="checkbox" name="saveMed" checked> Save to my medicines</label></div>
+    <label>Dose given<input type="text" name="dose" placeholder="e.g. 2.5 ml" autocomplete="off"></label>
+    <label>Note (optional)<input type="text" name="note" autocomplete="off"></label>
+    <label>Time<input type="datetime-local" name="when" value="${localDT(Date.now())}" required></label>
+    ${buttons("Save")}`,
+    f => {
+      const v = f.elements.med.value, dose = f.elements.dose.value.trim();
+      let name, medId = null;
+      if (v === "new") {
+        name = f.elements.mname.value.trim();
+        if (f.elements.saveMed.checked) { const m = { id: uid(), name, dose, note: "" }; meds.push(m); saveMeds(); medId = m.id; }
+      } else {
+        const m = meds.find(x => String(x.id) === v);
+        name = m ? m.name : "Medicine"; medId = m ? m.id : null;
+      }
+      const detail = [[name, dose].filter(Boolean).join(" "), f.elements.note.value.trim()].filter(Boolean).join(" · ");
+      let t = new Date(f.elements.when.value).getTime();
+      if (!isFinite(t)) t = Date.now();
+      addEntry("medication", detail, Math.min(t, Date.now()), medId);
+    });
+  const sync = () => {
+    const v = f.elements.med.value, isNew = v === "new";
+    $("#newMed", f).style.display = isNew ? "" : "none";
+    f.elements.mname.required = isNew;
+    f.elements.dose.value = isNew ? "" : ((meds.find(m => String(m.id) === v) || {}).dose || "");
+  };
+  f.addEventListener("change", e => { if (e.target.name === "med") sync(); });
+  sync();
+}
+
+function openMed(id) {
+  const m = meds.find(x => x.id === id) || { name: "", dose: "", note: "" };
+  openDialog(`<h2>${id ? "Edit medicine" : "New medicine"}</h2>
+    <label>Medicine name<input type="text" name="mname" value="${esc(m.name)}" required autocomplete="off" placeholder="e.g. Paracetamol drops"></label>
+    <label>Usual dose<input type="text" name="dose" value="${esc(m.dose)}" autocomplete="off" placeholder="e.g. 2.5 ml"></label>
+    <label>Notes<input type="text" name="note" value="${esc(m.note)}" autocomplete="off" placeholder="e.g. after feeding, max 4 a day"></label>
+    ${buttons("Save")}`,
+    f => {
+      const data = { name: f.elements.mname.value.trim(), dose: f.elements.dose.value.trim(), note: f.elements.note.value.trim() };
+      if (id) Object.assign(meds.find(x => x.id === id), data); else meds.push({ id: uid(), ...data });
+      saveMeds(); render();
+    });
+}
+
+function openReminder(presetMedId) {
+  const types = Object.keys(T);
+  const startType = presetMedId ? "medication" : "feeding";
+  const ivs = [30, 60, 120, 180, 240, 360, 480, 720, 1440, 2880];
+  const medItems = meds.map(m => ({ v: String(m.id), t: m.name })).concat([{ v: "", t: "Other" }]);
+  let medIdx = presetMedId ? meds.findIndex(m => m.id === presetMedId) : 0;
+  if (medIdx < 0) medIdx = medItems.length - 1;
+  const f = openDialog(`<h2>New reminder</h2>
+    ${chips("rtype", types.map(k => ({ v: k, t: T[k].emoji + " " + T[k].label })), types.indexOf(startType))}
+    <div id="medRow">${meds.length
+      ? `<div class="lbl" style="margin-top:0">Medicine</div>${chips("rmed", medItems, medIdx)}`
+      : `<div class="note">No medicines saved yet. Add them in the Medicines tab, or just type a label below.</div>`}</div>
+    <label>Label (optional)<input type="text" name="label" autocomplete="off"></label>
+    <div class="lbl">Repeat every</div>
+    <div class="chips">${ivs.map(m => `<button type="button" class="chipbtn" data-min="${m}">${fmtInt(m)}</button>`).join("")}</div>
+    <div class="two"><input type="number" name="num" min="0.5" step="any" value="3" required>
+      <select name="unit"><option value="1">minutes</option><option value="60" selected>hours</option><option value="1440">days</option></select></div>
+    <label>First alarm at<input type="datetime-local" name="start" required></label>
+    <label class="inl"><input type="checkbox" name="fixed"> Keep fixed times (don't shift when I log)</label>
+    ${buttons("Add")}`,
+    f => {
+      const type = f.elements.rtype.value, m = minutes();
+      if (!(m >= 1)) return false;
+      const medId = type === "medication" && f.elements.rmed ? (Number(f.elements.rmed.value) || null) : null;
+      const med = meds.find(x => x.id === medId);
+      const label = f.elements.label.value.trim() || (med ? medText(med) : T[type].label + " reminder");
+      const step = m * 60000, now = Date.now();
+      let start = new Date(f.elements.start.value).getTime();
+      if (!isFinite(start)) start = now + step;
+      if (start <= now) start += Math.ceil((now - start + 1) / step) * step;
+      reminders.push({ id: uid(), type, label, medId, intervalMin: m, enabled: true, fixed: f.elements.fixed.checked, nextAt: start, snoozeUntil: 0 });
+      saveReminders();
+      tab = "reminders";
+      render();
+      // ask for notification permission now (we're inside a tap, which browsers require)
+      if ("Notification" in window && Notification.permission === "default") {
+        try { Notification.requestPermission().then(render, () => {}); } catch (e) {}
+      }
+    });
+  let touched = false;
+  const minutes = () => Math.round(parseFloat(f.elements.num.value) * parseFloat(f.elements.unit.value));
+  const mark = () => { const m = minutes(); f.querySelectorAll("[data-min]").forEach(b => b.classList.toggle("sel", Number(b.dataset.min) === m)); };
+  const defaultStart = () => { if (!touched) { const m = minutes(); if (m >= 1) f.elements.start.value = localDT(Date.now() + m * 60000); } };
+  const setMinutes = m => {
+    const unit = m % 1440 === 0 && m >= 2880 ? 1440 : m % 60 === 0 ? 60 : 1;
+    f.elements.unit.value = String(unit);
+    f.elements.num.value = String(m / unit);
+    mark(); defaultStart();
+  };
+  const syncType = () => {
+    const isMed = f.elements.rtype.value === "medication";
+    $("#medRow", f).style.display = isMed ? "" : "none";
+    f.elements.fixed.checked = isMed;
+    const sel = f.elements.rmed && meds.find(x => String(x.id) === f.elements.rmed.value);
+    f.elements.label.placeholder = isMed ? (sel ? medText(sel) : "Medicine name & dose") : T[f.elements.rtype.value].label + " reminder";
+  };
+  f.querySelectorAll("[data-min]").forEach(b => b.onclick = () => setMinutes(Number(b.dataset.min)));
+  f.addEventListener("input", e => {
+    if (e.target.name === "start") touched = true;
+    else if (e.target.name === "num") { mark(); defaultStart(); }
+  });
+  f.addEventListener("change", e => {
+    if (e.target.name === "unit") { mark(); defaultStart(); }
+    else if (e.target.name === "rtype" || e.target.name === "rmed") syncType();
+  });
+  setMinutes(180);
+  syncType();
+}
+
+// ---------- sound / vibration / notifications ----------
+let ac = null, beepTimer = null;
+function unlockAudio() {
+  try {
+    if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+  } catch (e) {}
+}
+["pointerdown", "touchstart", "keydown", "click"].forEach(ev => addEventListener(ev, unlockAudio, { passive: true }));
+function beep() {
+  if (!ac) return;
+  const t = ac.currentTime;
+  [0, 0.28, 0.56].forEach(d => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "square"; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.0001, t + d);
+    g.gain.exponentialRampToValueAtTime(0.3, t + d + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.2);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t + d); o.stop(t + d + 0.22);
+  });
+}
+function buzz() {
+  try {
+    // browsers only allow vibration after the person has tapped the page once
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+    navigator.vibrate && navigator.vibrate([300, 150, 300, 150, 300]);
+  } catch (e) {}
+}
+function startSound() {
+  if (beepTimer) return;
+  beep(); buzz();
+  beepTimer = setInterval(() => { beep(); buzz(); }, 2500);
+}
+function stopSound() {
+  clearInterval(beepTimer); beepTimer = null;
+  try { navigator.vibrate && navigator.vibrate(0); } catch (e) {}
+}
+async function notify(r) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return false;
+  const title = T[r.type].emoji + " " + r.label, body = noteFor(r);
+  try {
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if (reg) {
+      await reg.showNotification(title, {
+        body, tag: "r" + r.id, renotify: true, requireInteraction: true, vibrate: [300, 150, 300],
+        icon: "icon-192.png", badge: "icon-192.png", data: { rid: r.id },
+        actions: [{ action: "done", title: "✓ Done" }, { action: "snooze", title: "Snooze 10 min" }],
+      });
+      return true;
+    }
+  } catch (e) {}
+  try { new Notification(title, { body, tag: "r" + r.id, icon: "icon-192.png", requireInteraction: true }); return true; } catch (e) {}
+  return false;
+}
+
+// ---------- alarm engine ----------
+function fire(r) {
+  ringing.push(r.id);
+  notify(r); startSound(); renderAlarm();
+}
+function tick() {
+  const now = Date.now();
+  reminders.forEach(r => { if (r.enabled && due(r) <= now && !ringing.includes(r.id)) fire(r); });
+}
+function renderAlarm() {
+  const el = $("#alarm");
+  const active = ringing.map(id => id === "test" ? { id: "test", type: "feeding", label: "Test alarm", nextAt: Date.now(), test: true } : reminders.find(r => r.id === id)).filter(Boolean);
+  ringing = active.map(r => r.id);
+  if (!active.length) { el.classList.remove("on"); el.innerHTML = ""; stopSound(); if (NB) { try { NB.clearShown(); } catch (e) {} } return; }
+  el.innerHTML = `<div class="box"><div class="bell">🔔</div><h2>Alarm</h2>` + active.map(r => {
+    const late = Math.floor((Date.now() - due(r)) / 60000);
+    return `<div class="ar"><div class="big">${T[r.type].emoji} ${esc(r.label)}</div>
+      <div class="sm">${esc(r.test ? T[r.type].note : noteFor(r))}${late >= 1 && !r.test ? " · due " + late + " min ago" : ""}</div>
+      <div class="row" style="justify-content:flex-start;margin-top:0">
+      <button class="btn primary" data-act="done" data-id="${r.id}">✓ Done</button>
+      <button class="btn" data-act="snooze" data-id="${r.id}">Snooze 10 min</button></div></div>`;
+  }).join("") + "</div>";
+  el.classList.add("on");
+}
+
+// ---------- events ----------
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  const rid = id === "test" ? "test" : Number(id);
+  if (act === "tab") { tab = b.dataset.tab; render(); window.scrollTo(0, 0); }
+  else if (act === "log") openLog(b.dataset.type);
+  else if (act === "del-entry") { if (confirm("Delete this entry?")) { entries = entries.filter(x => x.id !== Number(id)); saveEntries(); render(); } }
+  else if (act === "del-rem") {
+    if (confirm("Delete this reminder?")) { reminders = reminders.filter(x => x.id !== Number(id)); ringing = ringing.filter(x => x !== Number(id)); saveReminders(); renderAlarm(); render(); }
+  }
+  else if (act === "med-log") openLogMed(Number(id));
+  else if (act === "med-rem") openReminder(Number(id));
+  else if (act === "med-edit") openMed(Number(id));
+  else if (act === "med-del") { if (confirm("Delete this medicine? Past log entries are kept.")) { meds = meds.filter(x => x.id !== Number(id)); saveMeds(); render(); } }
+  else if (act === "notif") { try { await Notification.requestPermission(); } catch (e) {} render(); }
+  else if (act === "nnotif") { try { NB.requestNotificationPermission(); } catch (e) {} setTimeout(render, 2000); setTimeout(render, 6000); }
+  else if (act === "test-notif" && NB) { try { NB.notifyNow("🍼 Test notification", "If you can see this, your alarms will work."); } catch (e) {} }
+  else if (act === "test-notif") {
+    if ("Notification" in window && Notification.permission === "default") { try { await Notification.requestPermission(); } catch (e) {} render(); }
+    const ok = await notify({ id: 0, type: "feeding", label: "Test notification", medId: null });
+    if (!ok) alert("Couldn't show a notification. See the “Notification check” card below for the reason.");
+  }
+  else if (act === "test") { if (!ringing.includes("test")) { ringing.push("test"); startSound(); renderAlarm(); } }
+  else if (act === "done") { if (rid === "test") { ringing = ringing.filter(x => x !== "test"); renderAlarm(); } else doDone(rid); }
+  else if (act === "snooze") { if (rid === "test") { ringing = ringing.filter(x => x !== "test"); renderAlarm(); } else doSnooze(rid); }
+});
+document.addEventListener("change", e => {
+  const el = e.target;
+  if (el.dataset.act === "toggle") {
+    const r = reminders.find(x => x.id === Number(el.dataset.id));
+    if (r) {
+      r.enabled = el.checked;
+      if (r.enabled) { r.snoozeUntil = 0; if (r.nextAt <= Date.now()) advance(r); }
+      ringing = ringing.filter(x => x !== r.id);
+      saveReminders(); renderAlarm(); render();
+    }
+  } else if (el.dataset.act === "wake") setWake(el.checked);
+});
+$("#fab").addEventListener("click", () => { if (tab === "meds") openMed(); else openReminder(); });
+
+// Done / Snooze buttons on the system notification (sent by the service worker)
+function handleNotifAction(action, rid) {
+  rid = Number(rid);
+  if (action === "done") doDone(rid); else if (action === "snooze") doSnooze(rid);
+}
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", e => {
+    if (e.data && e.data.type === "notif-action") handleNotifAction(e.data.action, e.data.rid);
+  });
+}
+
+// ---------- keep screen awake ----------
+let wl = null;
+async function setWake(on) {
+  save("bt_wake", on);
+  try {
+    if (on && navigator.wakeLock) { wl = await navigator.wakeLock.request("screen"); }
+    else if (wl) { await wl.release(); wl = null; }
+  } catch (e) {}
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") { tick(); nativeSync(); if (load("bt_wake", false)) setWake(true); if (!dlg.open) render(); }
+});
+
+// ---------- start ----------
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  navigator.serviceWorker.register("sw.js").then(checkSW, checkSW);
+} else { swReg = "none"; }
+checkSW();
+render();
+try { // opened from a notification's Done/Snooze button while the app was closed
+  const q = new URLSearchParams(location.search);
+  if (q.get("na")) { handleNotifAction(q.get("na"), q.get("rid")); history.replaceState(null, "", location.pathname); }
+} catch (e) {}
+tick();
+nativeSync();
+setInterval(tick, 1000);
+setInterval(() => { if (!dlg.open) render(); }, 30000);
+if (load("bt_wake", false)) setWake(true);
+</script>
+</body>
+</html>
