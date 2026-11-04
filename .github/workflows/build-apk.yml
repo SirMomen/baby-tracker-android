@@ -1,0 +1,41 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
+      - name: Build Debug APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BabyTracker-v2.2-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Update GitHub Release v2.2 with APK
+        run: |
+          gh release upload v2.2 app/build/outputs/apk/debug/app-debug.apk#BabyTracker.apk --clobber || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
