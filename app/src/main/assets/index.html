@@ -1,0 +1,1389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6750a4">
+<title>Baby Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-48.png" sizes="48x48" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #fdf8ff; --surface: #ffffff; --text: #1d1b20; --muted: #6b6573;
+    --primary: #6750a4; --on-primary: #ffffff; --tonal: #e8def8; --on-tonal: #1d192b;
+    --border: #e3dde9; --danger: #b3261e; --danger-bg: #f9dedc; --ok: #386a20;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141218; --surface: #211f26; --text: #e6e0e9; --muted: #a9a3b0;
+      --primary: #cfbcff; --on-primary: #381e72; --tonal: #4a4458; --on-tonal: #e8def8;
+      --border: #3a3640; --danger: #f2b8b5; --danger-bg: #4a2523; --ok: #a3d98f;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, "Cairo", "Segoe UI Arabic", sans-serif; }
+  
+  [dir="rtl"] { direction: rtl; text-align: right; }
+  [dir="ltr"] { direction: ltr; text-align: left; }
+
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 10px; border-bottom: 1px solid var(--border); }
+  .header-main { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  header img { width: 34px; height: 34px; border-radius: 9px; flex: none; }
+  header h1 { margin: 0; font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .lang-btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--primary);
+    padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px; cursor: pointer; flex: none;
+    transition: background 0.15s;
+  }
+  .lang-btn:active { background: var(--tonal); }
+
+  main { padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); max-width: 640px; margin: 0 auto; }
+  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; background: var(--surface);
+    border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); }
+  nav button { flex: 1; border: 0; background: none; color: var(--muted); padding: 7px 0 6px; font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  nav button span:first-child { display: block; font-size: 19px; line-height: 1.1; margin-bottom: 2px; }
+  nav button .tab-lbl { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+  nav button.on { color: var(--primary); }
+  nav button.on .tab-lbl { font-weight: 700; }
+  @keyframes scanSweep {
+    0% { top: 12%; opacity: 0.3; }
+    50% { top: 88%; opacity: 1; }
+    100% { top: 12%; opacity: 0.3; }
+  }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px; }
+  .sum .e { font-size: 26px; } .sum .l { font-size: 12px; color: var(--muted); }
+  .sum .a { font-weight: 600; margin-top: 2px; } .sum .c { font-size: 12px; color: var(--muted); }
+  button { font: inherit; cursor: pointer; }
+  .btn { border: 0; border-radius: 999px; padding: 10px 14px; background: var(--tonal); color: var(--on-tonal); font-weight: 600; }
+  .btn.primary { background: var(--primary); color: var(--on-primary); }
+  .btn.ghost { background: none; color: var(--primary); }
+  .btn.danger { background: var(--danger-bg); color: var(--danger); }
+  .logbtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .logbtns .btn { padding: 12px 4px; font-size: 14px; }
+  h3.day { margin: 16px 4px 6px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .entry { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); }
+  .entry .e { font-size: 24px; flex: none; } .entry .m { flex: 1; min-width: 0; }
+  .entry .t { font-size: 12px; color: var(--muted); } .entry .d { overflow-wrap: anywhere; }
+  .icon { border: 0; background: none; color: var(--muted); font-size: 18px; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .icon:active { background: var(--tonal); color: var(--danger); }
+  .empty { color: var(--muted); padding: 24px 8px; text-align: center; }
+  .banner { background: var(--danger-bg); color: var(--danger); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px;
+    display: flex; gap: 8px; align-items: center; font-size: 14px; }
+  .banner .btn { flex: none; padding: 8px 12px; background: var(--surface); color: var(--text); }
+  .ti { font-weight: 600; } .s { font-size: 13px; color: var(--muted); }
+  .rem { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .rem .m { flex: 1; min-width: 0; }
+  .med { margin-bottom: 8px; }
+  .med .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .med .actions .btn { padding: 8px 12px; font-size: 14px; }
+  .switch { position: relative; width: 48px; height: 28px; flex: none; }
+  .switch input { opacity: 0; width: 100%; height: 100%; margin: 0; position: absolute; inset: 0; z-index: 1; cursor: pointer; }
+  .switch i { position: absolute; inset: 0; background: var(--border); border-radius: 999px; transition: .15s; }
+  .switch i::after { content: ""; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .15s; }
+  [dir="rtl"] .switch i::after { left: auto; right: 3px; }
+  .switch input:checked + i { background: var(--primary); }
+  .switch input:checked + i::after { transform: translateX(20px); }
+  [dir="rtl"] .switch input:checked + i::after { transform: translateX(-20px); }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; align-items: center; }
+  .note { font-size: 13px; color: var(--muted); margin: 4px 4px 12px; }
+  .fab { position: fixed; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 6; width: 56px; height: 56px; border-radius: 16px;
+    border: 0; background: var(--primary); color: var(--on-primary); font-size: 30px; box-shadow: 0 3px 10px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; }
+  [dir="rtl"] .fab { right: auto; left: 16px; }
+  dialog { border: 0; border-radius: 24px; padding: 20px; width: min(92vw, 420px); max-height: 90vh; overflow-y: auto; background: var(--surface); color: var(--text); }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog h2 { margin: 0 0 12px; font-size: 20px; }
+  dialog label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0; }
+  dialog input[type=text], dialog input[type=number], dialog input[type=datetime-local], dialog input:not([type]), dialog select {
+    display: block; width: 100%; margin-top: 4px; padding: 10px 12px; font: inherit; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 12px; }
+  dialog label.inl { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 14px; }
+  dialog label.inl input { width: auto; margin: 0; }
+  .lbl { font-size: 13px; color: var(--muted); margin: 12px 0 2px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 4px; }
+  .two input, .two select { margin-top: 0 !important; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .chip span, .chipbtn { display: inline-block; padding: 7px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px;
+    color: var(--text); background: none; }
+  .chip input:checked + span, .chipbtn.sel { background: var(--tonal); color: var(--on-tonal); border-color: transparent; font-weight: 600; }
+  .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  [dir="rtl"] .row { justify-content: flex-start; }
+  #alarm { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; padding: 16px; }
+  #alarm.on { display: flex; }
+  #alarm .box { background: var(--surface); border-radius: 24px; padding: 20px; width: min(94vw, 420px); max-height: 88vh; overflow: auto; }
+  #alarm h2 { margin: 0 0 4px; } #alarm .ar { padding: 12px 0; border-top: 1px solid var(--border); }
+  #alarm .ar:first-of-type { border-top: 0; }
+  #alarm .big { font-size: 18px; font-weight: 700; } #alarm .sm { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  @keyframes pulse { 50% { transform: scale(1.12); } }
+  #alarm .bell { font-size: 40px; display: inline-block; animation: pulse 1s infinite; }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-main">
+    <img src="icon.svg" alt="" width="34" height="34">
+    <h1 id="title">Baby Tracker</h1>
+  </div>
+  <button class="lang-btn" id="langToggle" aria-label="Toggle language">
+    🌐 <span id="langLabel">العربية</span>
+  </button>
+</header>
+
+<main id="app"></main>
+<button class="fab" id="fab" aria-label="Add" hidden>＋</button>
+
+<nav>
+  <button data-act="tab" data-tab="today"><span>📋</span><span class="tab-lbl" id="tabToday">Today</span></button>
+  <button data-act="tab" data-tab="meds"><span>💊</span><span class="tab-lbl" id="tabMeds">Medicines</span></button>
+  <button data-act="tab" data-tab="reminders"><span>⏰</span><span class="tab-lbl" id="tabReminders">Reminders</span></button>
+</nav>
+
+<dialog id="dlg"></dialog>
+<dialog id="scannerDlg" style="padding:0;overflow:hidden;background:#0f172a;color:#fff;border-radius:24px;width:min(94vw,420px);border:1px solid rgba(255,255,255,0.15);box-shadow:0 20px 40px rgba(0,0,0,0.6)">
+  <div style="position:relative;width:100%;height:320px;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden">
+    <video id="scannerVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video>
+    <div style="position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center">
+      <div style="width:230px;height:140px;border:2px dashed #c084fc;border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,0.55);position:relative">
+        <div style="position:absolute;left:0;right:0;top:20%;height:2px;background:#f43f5e;box-shadow:0 0 10px #f43f5e;animation:scanSweep 2.2s infinite ease-in-out"></div>
+      </div>
+    </div>
+    <button type="button" id="scannerCloseBtn" aria-label="Close" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.65);color:#fff;border:0;width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    <div id="scannerStatus" style="position:absolute;bottom:10px;left:10px;right:10px;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);color:#e2e8f0;padding:6px 12px;border-radius:10px;font-size:11px;text-align:center;line-height:1.4"></div>
+  </div>
+  <div style="padding:14px;background:var(--surface);color:var(--text)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:11.5px;color:var(--muted)" id="scannerHint">Point camera at medicine barcode or enter digits:</div>
+      <button type="button" id="toggleAiKeyBtn" style="background:none;border:none;color:#9333ea;font-size:11px;font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px">⚙️ AI Key</button>
+    </div>
+    <div id="aiKeyBox" style="display:none;margin-bottom:10px;padding:8px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+      <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px">Google Gemini API Key (for real-time Google Search):</div>
+      <div style="display:flex;gap:4px">
+        <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy..." style="flex:1;padding:4px 8px;font-size:11px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text)">
+        <button type="button" id="saveAiKeyBtn" class="btn" style="padding:4px 10px;font-size:11px">Save</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="manualBarcodeInput" placeholder="e.g. 5000167048386" style="flex:1;padding:8px 10px;font-size:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+      <button type="button" id="manualBarcodeBtn" class="btn primary" style="padding:8px 14px;font-size:12.5px">Search</button>
+    </div>
+  </div>
+</dialog>
+<div id="alarm" role="alertdialog" aria-live="assertive"></div>
+
+<script>
+"use strict";
+
+// ---------- Internationalization (i18n) ----------
+const I18N = {
+  en: {
+    appTitle: "Baby Tracker",
+    tabToday: "Today",
+    tabMeds: "Medicines",
+    tabReminders: "Reminders",
+    langButton: "العربية",
+    feeding: "Feeding",
+    feedingNote: "Time to feed the baby",
+    diaper: "Diaper",
+    diaperNote: "Time for a diaper check",
+    medication: "Medication",
+    medicationNote: "Time for medication",
+    logBtn: "Log",
+    todayCount: "today",
+    nothingLogged: "Nothing logged yet.<br>Tap a button above to log a feed, diaper change or dose.",
+    justNow: "just now",
+    minAgo: "m ago",
+    hoursMinAgo: "h {m}m ago",
+    today: "Today",
+    yesterday: "Yesterday",
+    deleteEntryConfirm: "Delete this entry?",
+    deleteRemConfirm: "Delete this reminder?",
+    deleteMedConfirm: "Delete this medicine? Past log entries are kept.",
+    confirmTitle: "Confirm Delete",
+    cancel: "Cancel",
+    delete: "Delete",
+    save: "Save",
+    add: "Add",
+    edit: "Edit",
+    noReminders: "No reminders yet.<br>Tap ＋ to add a repeating alarm, e.g. feeding every 3 hours or a medicine every 12 hours.",
+    every: "Every",
+    fixedTimes: "fixed times",
+    next: "next",
+    snoozed: "snoozed",
+    off: "off",
+    noMeds: "No medicines added yet.<br>Tap ＋ to add one, then set reminders or log doses with one tap.",
+    noDoseSet: "No dose set",
+    alarm: "Alarm",
+    done: "✓ Done",
+    snooze10: "Snooze 10 min",
+    testNotifBtn: "Test notification",
+    testAlarmBtn: "Test alarm sound",
+    keepAwake: "Keep screen awake on this page",
+    notifCheck: "Notification check",
+    androidAlarms: "Android alarms",
+    ready: "ready ✓",
+    notifPerm: "Notification permission",
+    allowed: "allowed ✓",
+    notAllowed: "not allowed ✗",
+    alarmsScheduledNotice: "Alarms are scheduled by Android, so they fire even when the app is closed. Press “Test notification” to check. If nothing shows, check Do Not Disturb and that battery saver isn't restricting the app.",
+    allowPromptNotice: "Tap Allow above and accept the prompt. If no prompt appears, open Android Settings → Apps → Baby Tracker → Notifications and turn them on.",
+    allowBtn: "Allow",
+    feedOpts: ["Breast – left", "Breast – right", "Bottle", "Formula", "Solids"],
+    diaperOpts: ["Wet", "Dirty", "Wet + dirty", "Dry (clean)"],
+    feedAmountHint: "Amount / duration (e.g. 90 ml, 10 min)",
+    diaperNoteHint: "Note (optional)",
+    timeLabel: "Time",
+    whichMed: "Which medicine?",
+    newMedOpt: "New medicine",
+    medName: "Medicine name",
+    saveToMyMeds: "Save to my medicines",
+    doseGiven: "Dose given",
+    dosePlaceholder: "e.g. 2.5 ml",
+    noteOpt: "Note (optional)",
+    newReminder: "New reminder",
+    repeatEvery: "Repeat every",
+    minutesUnit: "minutes",
+    hoursUnit: "hours",
+    daysUnit: "days",
+    firstAlarmAt: "First alarm at",
+    keepFixedTimes: "Keep fixed times (don't shift when I log)",
+    medsTabNote: "No medicines saved yet. Add them in the Medicines tab, or just type a label below.",
+    labelOpt: "Label (optional)",
+    reminderSuffix: "reminder",
+    editReminder: "Edit reminder",
+    scanBarcodeBtn: "Scan Barcode",
+    scanInstructions: "Point camera at medicine barcode or enter code below:",
+    identifyingMed: "Identifying medication with Gemini...",
+    barcodePlaceholder: "e.g. 5000167048386",
+    searchBtn: "Identify"
+  },
+  ar: {
+    appTitle: "متتبع الطفل",
+    tabToday: "اليوم",
+    tabMeds: "الأدوية",
+    tabReminders: "التذكيرات",
+    langButton: "English",
+    feeding: "الرضاعة",
+    feedingNote: "حان وقت إرضاع الطفل",
+    diaper: "الحفاض",
+    diaperNote: "حان وقت فحص الحفاض",
+    medication: "الدواء",
+    medicationNote: "حان وقت إعطاء الدواء",
+    logBtn: "تسجيل",
+    todayCount: "اليوم",
+    nothingLogged: "لا توجد سجلات بعد.<br>انقر على أحد الأزرار أعلاه لتسجيل رضاعة أو تغيير حفاض أو جرعة دواء.",
+    justNow: "الآن",
+    minAgo: "د مضت",
+    hoursMinAgo: "س {m}د مضت",
+    today: "اليوم",
+    yesterday: "أمس",
+    deleteEntryConfirm: "هل أنت متأكد من حذف هذا السجل؟",
+    deleteRemConfirm: "هل أنت متأكد من حذف هذا التذكير؟",
+    deleteMedConfirm: "هل أنت متأكد من حذف هذا الدواء؟ سيتم الاحتفاظ بالسجلات السابقة.",
+    confirmTitle: "تأكيد الحذف",
+    cancel: "إلغاء",
+    delete: "حذف",
+    save: "حفظ",
+    add: "إضافة",
+    edit: "تعديل",
+    noReminders: "لا توجد تذكيرات حتى الآن.<br>انقر على ＋ لإضافة منبه متكرر، مثل الرضاعة كل 3 ساعات أو الدواء كل 12 ساعة.",
+    every: "كل",
+    fixedTimes: "أوقات ثابتة",
+    next: "التالي",
+    snoozed: "مؤجل",
+    off: "متوقف",
+    noMeds: "لم يتم حفظ أي أدوية بعد.<br>انقر على ＋ لإضافة دواء، ثم قم بجدولة التذكيرات وتسجيل الجرعات بنقرة واحدة.",
+    noDoseSet: "لم تحدد جرعة",
+    alarm: "منبه",
+    done: "✓ تم",
+    snooze10: "تأجيل 10 دقائق",
+    testNotifBtn: "تجربة الإشعار",
+    testAlarmBtn: "تجربة صوت المنبه",
+    keepAwake: "إبقاء الشاشة قيد التشغيل في هذه الصفحة",
+    notifCheck: "فحص الإشعارات",
+    androidAlarms: "منبهات أندرويد",
+    ready: "جاهز ✓",
+    notifPerm: "إذن الإشعارات",
+    allowed: "مسموح ✓",
+    notAllowed: "غير مسموح ✗",
+    alarmsScheduledNotice: "تتم جدولة المنبهات بواسطة نظام أندرويد مباشرة، لذا فهي تعمل حتى عند إغلاق التطبيق. انقر على «تجربة الإشعار» للتأكد. إذا لم يظهر شيء، تحقق من وضع «عدم الإزعاج» وتوفير البطارية.",
+    allowPromptNotice: "انقر على «السماح» أعلاه واقبل الطلب. إذا لم يظهر، افتح إعدادات أندرويد ← التطبيقات ← متتبع الطفل ← الإشعارات وقم بتفعيلها.",
+    allowBtn: "السماح",
+    feedOpts: ["ثدي – أيسر", "ثدي – أيمن", "رضّاعة", "حليب صناعي", "طعام صلب"],
+    diaperOpts: ["مبلل", "متسخ", "مبلل + متسخ", "جاف (نظيف)"],
+    feedAmountHint: "الكمية / المدة (مثال: 90 مل، 10 دقائق)",
+    diaperNoteHint: "ملاحظة (اختياري)",
+    timeLabel: "الوقت",
+    whichMed: "أي دواء؟",
+    newMedOpt: "دواء جديد",
+    medName: "اسم الدواء",
+    saveToMyMeds: "حفظ في قائمة أدويتي",
+    doseGiven: "الجرعة المعطاة",
+    dosePlaceholder: "مثال: 2.5 مل",
+    noteOpt: "ملاحظة (اختياري)",
+    newReminder: "تذكير جديد",
+    repeatEvery: "تكرار كل",
+    minutesUnit: "دقائق",
+    hoursUnit: "ساعات",
+    daysUnit: "أيام",
+    firstAlarmAt: "أول منبه في",
+    keepFixedTimes: "أوقات ثابتة (لا تتغير عند التسجيل)",
+    medsTabNote: "لا توجد أدوية محفوظة بعد. أضفها في تبويب الأدوية أو اكتب اسماً بالأسفل.",
+    labelOpt: "اسم التذكير (اختياري)",
+    reminderSuffix: "تذكير",
+    editReminder: "تعديل التذكير",
+    scanBarcodeBtn: "مسح باركود الدواء",
+    scanInstructions: "وجّه الكاميرا نحو باركود الدواء أو اكتب الرقم بالأسفل:",
+    identifyingMed: "جاري التعرف على الدواء والجرعة عبر Gemini...",
+    barcodePlaceholder: "مثال: 5000167048386",
+    searchBtn: "فحص"
+  }
+};
+
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+let currentLang = load("bt_lang", "ar"); // Default to Arabic as requested, with instant toggle
+const t = key => (I18N[currentLang] && I18N[currentLang][key]) || (I18N.en[key] || key);
+
+function applyLang() {
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+  const lbl = document.getElementById("langLabel");
+  if (lbl) lbl.textContent = t("langButton");
+  const tabT = document.getElementById("tabToday");
+  if (tabT) tabT.textContent = t("tabToday");
+  const tabM = document.getElementById("tabMeds");
+  if (tabM) tabM.textContent = t("tabMeds");
+  const tabR = document.getElementById("tabReminders");
+  if (tabR) tabR.textContent = t("tabReminders");
+  const sHint = document.getElementById("scannerHint");
+  if (sHint) sHint.textContent = t("scanInstructions");
+  const sBtn = document.getElementById("manualBarcodeBtn");
+  if (sBtn) sBtn.textContent = t("searchBtn");
+  const sInput = document.getElementById("manualBarcodeInput");
+  if (sInput) sInput.placeholder = t("barcodePlaceholder");
+}
+
+const T = {
+  feeding:    { emoji: "🍼" },
+  diaper:     { emoji: "🧷" },
+  medication: { emoji: "💊" },
+};
+const getTypeLabel = type => t(type);
+const getTypeNote = type => t(type + "Note");
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+let entries = load("bt_entries", []);      // {id,type,time,detail,medId}
+let reminders = load("bt_reminders", []);  // {id,type,label,medId,intervalMin,enabled,fixed,nextAt,snoozeUntil}
+let meds = load("bt_meds", []);            // {id,name,dose,note}
+let tab = "today";
+let ringing = [];                          // reminder ids currently alarming (or "test")
+
+const uid = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
+const saveEntries = () => save("bt_entries", entries);
+const NB = window.BabyNative || null;      // present only inside the Android wrapper app
+const saveReminders = () => { save("bt_reminders", reminders); nativeSync(); };
+const saveMeds = () => { save("bt_meds", meds); nativeSync(); };
+const due = r => r.snoozeUntil || r.nextAt;
+const medText = m => [m.name, m.dose].filter(Boolean).join(" ");
+const medDetailFor = r => { const m = meds.find(x => String(x.id) === String(r.medId)); return m ? medText(m) : r.label; };
+const noteFor = r => r.type === "medication" ? (currentLang === "ar" ? "حان وقت " + medDetailFor(r) : "Time for " + medDetailFor(r)) : getTypeNote(r.type);
+
+// ---------- formatting ----------
+function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
+
+function ago(tTime) {
+  const m = Math.max(0, Math.floor((Date.now() - tTime) / 60000));
+  if (m < 1) return t("justNow");
+  if (m < 60) return `${m} ${t("minAgo")}`;
+  const h = Math.floor(m / 60);
+  const remM = m % 60;
+  return `${h} ${t("hoursMinAgo").replace("{m}", String(remM))}`;
+}
+
+function clock(tTime) {
+  return new Date(tTime).toLocaleTimeString(currentLang === "ar" ? "ar-EG" : "en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+function fmtTime(tTime) {
+  const s = startOfToday();
+  if (tTime >= s && tTime < s + 864e5) return clock(tTime);
+  return new Date(tTime).toLocaleDateString(currentLang === "ar" ? "ar-EG" : "en-US", { month: "short", day: "numeric" }) + " " + clock(tTime);
+}
+
+function dayLabel(tTime) {
+  const s = startOfToday();
+  if (tTime >= s) return t("today");
+  if (tTime >= s - 864e5) return t("yesterday");
+  return new Date(tTime).toLocaleDateString(currentLang === "ar" ? "ar-EG" : "en-US", { weekday: "long", month: "short", day: "numeric" });
+}
+
+function fmtInt(min) {
+  if (currentLang === "ar") {
+    if (min < 60) return min + " دقيقة";
+    if (min % 60 === 0) {
+      const h = min / 60;
+      return h >= 48 && h % 24 === 0 ? (h / 24) + " أيام" : h + " ساعات";
+    }
+    return Math.floor(min / 60) + " س و " + (min % 60) + " د";
+  }
+  if (min < 60) return min + " min";
+  if (min % 60 === 0) { const h = min / 60; return h >= 48 && h % 24 === 0 ? (h / 24) + " days" : h + " h"; }
+  return Math.floor(min / 60) + " h " + (min % 60) + " min";
+}
+
+function localDT(tTime) {
+  const d = new Date(tTime - new Date(tTime).getTimezoneOffset() * 60000);
+  return d.toISOString().slice(0, 16);
+}
+
+// ---------- In-App Safe Dialog Confirmation (Never blocked by browser or WebView!) ----------
+function confirmAction(message, onConfirm) {
+  openDialog(`<h2>${esc(t("confirmTitle"))}</h2>
+    <p style="margin:8px 0 16px;font-size:14px;color:var(--text);line-height:1.5">${esc(message)}</p>
+    <div class="row">
+      <button type="button" class="btn ghost" data-cancel>${esc(t("cancel"))}</button>
+      <button type="submit" class="btn danger">${esc(t("delete"))}</button>
+    </div>`, () => {
+      onConfirm();
+      return true;
+    });
+}
+
+// ---------- data actions ----------
+function addEntry(type, detail, time, medId) {
+  entries.push({ id: uid(), type, time, detail, medId: medId || null });
+  entries.sort((a, b) => b.time - a.time);
+  saveEntries();
+  const now = Date.now();
+  const mObj = medId ? meds.find(m => String(m.id) === String(medId)) : null;
+
+  reminders.forEach(r => {
+    if (!r.enabled) return;
+
+    if (type === "medication") {
+      // Find matching reminder by medId or label/name
+      const match = (medId && String(r.medId) === String(medId)) ||
+        (mObj && r.label && r.label.toLowerCase().includes(mObj.name.toLowerCase())) ||
+        (detail && r.label && detail.toLowerCase().includes(r.label.toLowerCase()));
+
+      if (match) {
+        // REQUIREMENT: When medication log before time edit the reminder of that medication with the new time don't make new reminder
+        let next = time + r.intervalMin * 60000;
+        if (next <= now) next = now + r.intervalMin * 60000;
+        r.nextAt = next;
+        r.snoozeUntil = 0;
+        ringing = ringing.filter(id => String(id) !== String(r.id));
+      }
+      return;
+    }
+
+    if (r.type === type && !r.fixed) {
+      let next = time + r.intervalMin * 60000;
+      if (next <= now) next = now + r.intervalMin * 60000;
+      r.nextAt = next;
+      r.snoozeUntil = 0;
+      ringing = ringing.filter(id => String(id) !== String(r.id));
+    }
+  });
+
+  saveReminders();
+  renderAlarm();
+  render();
+}
+
+function advance(r) {
+  const now = Date.now(), step = r.intervalMin * 60000;
+  r.snoozeUntil = 0;
+  if (r.fixed) { if (r.nextAt <= now) r.nextAt += Math.ceil((now - r.nextAt + 1) / step) * step; }
+  else r.nextAt = now + step;
+}
+
+function doDone(rid) {
+  ringing = ringing.filter(x => String(x) !== String(rid));
+  const r = reminders.find(x => String(x.id) === String(rid));
+  if (r && due(r) <= Date.now() + 1000) {
+    addEntry(r.type, r.type === "medication" ? medDetailFor(r) : (currentLang === "ar" ? "تم الإنجاز من التذكير" : "Marked done from reminder"), Date.now(), r.medId);
+    advance(r);
+    saveReminders();
+  }
+  renderAlarm(); render();
+}
+
+function doSnooze(rid) {
+  ringing = ringing.filter(x => String(x) !== String(rid));
+  const r = reminders.find(x => String(x.id) === String(rid));
+  if (r && due(r) <= Date.now() + 1000) { r.snoozeUntil = Date.now() + 10 * 60000; saveReminders(); }
+  renderAlarm(); render();
+}
+
+// ---------- rendering ----------
+function render() {
+  applyLang();
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  $("#fab").hidden = tab === "today";
+  $("#fab").setAttribute("aria-label", tab === "meds" ? t("newMedOpt") : t("newReminder"));
+  $("#app").innerHTML = tab === "today" ? viewToday() : tab === "meds" ? viewMeds() : viewReminders();
+  const titles = { today: t("appTitle"), meds: t("tabMeds"), reminders: t("tabReminders") };
+  $("#title").textContent = titles[tab];
+}
+
+function viewToday() {
+  const s = startOfToday();
+  let h = '<div class="grid3">';
+  for (const k of Object.keys(T)) {
+    const last = entries.find(e => e.type === k);
+    const n = entries.filter(e => e.type === k && e.time >= s).length;
+    h += `<div class="card sum"><div class="e">${T[k].emoji}</div><div class="l">${esc(getTypeLabel(k))}</div>
+      <div class="a">${last ? ago(last.time) : "—"}</div><div class="c">${n} ${t("todayCount")}</div></div>`;
+  }
+  h += '</div><div class="logbtns">';
+  for (const k of Object.keys(T)) h += `<button class="btn" data-act="log" data-type="${k}">${T[k].emoji} ${t("logBtn")}</button>`;
+  h += "</div>";
+  if (!entries.length) return h + `<div class="empty">${t("nothingLogged")}</div>`;
+  let lastDay = "";
+  for (const e of entries.slice(0, 300)) {
+    const d = dayLabel(e.time);
+    if (d !== lastDay) { h += `<h3 class="day">${esc(d)}</h3>`; lastDay = d; }
+    h += `<div class="entry"><div class="e">${T[e.type].emoji}</div>
+      <div class="m"><div class="d">${esc(getTypeLabel(e.type))}${e.detail ? " · " + esc(e.detail) : ""}</div>
+      <div class="t">${clock(e.time)}</div></div>
+      <button class="icon" data-act="del-entry" data-id="${e.id}" aria-label="Delete entry" title="Delete">🗑</button></div>`;
+  }
+  return h;
+}
+
+function viewMeds() {
+  let h = `<div style="display:flex;gap:8px;margin-bottom:12px">
+    <button class="btn primary" data-act="scan-barcode" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px">
+      <span>📷</span> <span>${t("scanBarcodeBtn")}</span>
+    </button>
+    <button class="btn" data-act="add-med" style="display:flex;align-items:center;gap:4px;font-size:13px">
+      <span>＋</span> <span>${t("newMedOpt")}</span>
+    </button>
+  </div>`;
+  if (!meds.length) return h + `<div class="empty">${t("noMeds")}</div>`;
+  return h + meds.map(m => `<div class="card med"><div class="ti">💊 ${esc(m.name)}</div>
+    <div class="s">${esc([m.dose, m.note].filter(Boolean).join(" · ") || t("noDoseSet"))}</div>
+    <div class="actions">
+      <button class="btn primary" data-act="med-log" data-id="${m.id}">${t("logBtn")}</button>
+      <button class="btn" data-act="med-rem" data-id="${m.id}">⏰ ${t("tabReminders")}</button>
+      <button class="btn ghost" data-act="med-edit" data-id="${m.id}">${t("edit")}</button>
+      <button class="btn ghost" data-act="med-del" data-id="${m.id}">${t("delete")}</button>
+    </div></div>`).join("");
+}
+
+function viewReminders() {
+  let h = "";
+  const bad = !nbPerm() && !("Notification" in window && Notification.permission === "granted");
+  if (bad) {
+    h += `<div class="banner"><span>⚠️</span><div style="flex:1">${currentLang === "ar" ? "الإشعارات غير مسموح بها. انقر لتفعيلها كي ترن المنبهات في وقتها." : "Notifications are off. Turn them on so alarms ring on time."}</div>
+      <button class="btn" data-act="${NB ? "nnotif" : "notif"}">${t("allowBtn")}</button></div>`;
+  }
+  h += '<div class="tools">';
+  h += `<button class="btn" data-act="test-notif">🔔 ${t("testNotifBtn")}</button>`;
+  h += `<button class="btn ghost" data-act="test">🔊 ${t("testAlarmBtn")}</button>`;
+  h += "</div>";
+  h += `<div class="card" style="margin-bottom:10px">
+    <label class="inl" style="cursor:pointer"><input type="checkbox" data-act="wake" ${load("bt_wake", false) ? "checked" : ""}> ${t("keepAwake")}</label>
+  </div>`;
+  h += diagHtml();
+  if (!reminders.length) return h + `<div class="empty">${t("noReminders")}</div>`;
+  for (const r of reminders) {
+    const isDue = r.enabled && due(r);
+    h += `<div class="card rem"><div class="m"><div class="ti">${T[r.type].emoji} ${esc(r.label)}</div>
+      <div class="s">${t("every")} ${fmtInt(r.intervalMin)}${r.fixed ? " · " + t("fixedTimes") : ""}${r.enabled ? " · " + t("next") + " " + fmtTime(due(r)) + (r.snoozeUntil ? " (" + t("snoozed") + ")" : "") : " · " + t("off")}</div></div>
+      <span class="switch"><input type="checkbox" data-act="toggle" data-id="${r.id}" ${r.enabled ? "checked" : ""}><i></i></span>
+      <button class="icon" data-act="edit-rem" data-id="${r.id}" aria-label="Edit reminder" title="Edit">✏️</button>
+      <button class="icon" data-act="del-rem" data-id="${r.id}" aria-label="Delete reminder" title="Delete">🗑</button></div>`;
+  }
+  return h;
+}
+
+// ---------- native Android bridge ----------
+function nbPerm() { try { return NB.hasNotificationPermission(); } catch (e) { return true; } }
+
+function nativeSync() {
+  if (!NB) return;
+  try {
+    const now = Date.now(), horizon = now + 72 * 3600e3, items = [];
+    reminders.forEach(r => {
+      if (!r.enabled) return;
+      const step = Math.max(60000, r.intervalMin * 60000);
+      let tTime = due(r);
+      if (tTime <= now) tTime += Math.ceil((now - tTime + 1) / step) * step;
+      for (let n = 0; n < 48 && tTime <= horizon; n++, tTime += step)
+        items.push({ time: tTime, title: T[r.type].emoji + " " + r.label, body: noteFor(r) });
+    });
+    items.sort((a, b) => a.time - b.time);
+    NB.schedule(JSON.stringify(items.slice(0, 300)));
+  } catch (e) {}
+}
+
+function nativeDiag() {
+  const ok = nbPerm();
+  return `<div class="card" style="margin-bottom:10px"><div class="ti">${t("notifCheck")}</div>
+    <div class="s" style="margin:6px 0">
+      <div style="display:flex;justify-content:space-between"><span>${t("androidAlarms")}</span><span>${t("ready")}</span></div>
+      <div style="display:flex;justify-content:space-between"><span>${t("notifPerm")}</span><span>${ok ? t("allowed") : t("notAllowed")}</span></div></div>
+    <div style="font-size:13px">${ok ? t("alarmsScheduledNotice") : t("allowPromptNotice")}</div></div>`;
+}
+
+// ---------- notification status check ----------
+let swReg = "checking";
+function checkSW() {
+  if (!("serviceWorker" in navigator)) { swReg = "none"; return; }
+  navigator.serviceWorker.getRegistration().then(r => { swReg = r ? "ok" : "none"; if (tab === "reminders" && !dlg.open) render(); }, () => { swReg = "none"; });
+}
+
+function diagHtml() {
+  if (NB) return nativeDiag();
+  const api = "Notification" in window;
+  const perm = api ? Notification.permission : "unsupported";
+  const rows = [
+    [currentLang === "ar" ? "عنوان الصفحة" : "Page address", location.protocol === "file:" ? "local file ✗" : location.protocol === "https:" || location.hostname === "localhost" ? "secure ✓" : "not secure (http) ✗"],
+    [currentLang === "ar" ? "دعم الإشعارات" : "Notification support", api ? (currentLang === "ar" ? "نعم ✓" : "yes ✓") : (currentLang === "ar" ? "لا ✗" : "no ✗")],
+    [t("notifPerm"), api ? (perm === "granted" ? t("allowed") : perm === "denied" ? t("notAllowed") : (currentLang === "ar" ? "لم يُطلب بعد" : "not asked yet")) : "—"],
+    [currentLang === "ar" ? "المساعد الخلفي" : "Background helper", swReg === "ok" ? "running ✓" : swReg === "checking" ? "checking…" : "not running ✗"],
+  ];
+  return `<div class="card" style="margin-bottom:10px"><div class="ti">${t("notifCheck")}</div>
+    <div class="s" style="margin:6px 0">${rows.map(r => `<div style="display:flex;justify-content:space-between;gap:8px"><span>${r[0]}</span><span>${r[1]}</span></div>`).join("")}</div>
+    <div style="font-size:13px">${perm === "granted" ? t("alarmsScheduledNotice") : t("allowPromptNotice")}</div></div>`;
+}
+
+// ---------- dialogs ----------
+const dlg = $("#dlg");
+
+function chips(name, items, checkedIdx) {
+  return '<div class="chips">' + items.map((it, i) =>
+    `<label class="chip"><input type="radio" name="${name}" value="${esc(it.v)}" ${i === checkedIdx ? "checked" : ""}><span>${esc(it.t)}</span></label>`
+  ).join("") + "</div>";
+}
+
+function openDialog(html, onSubmit) {
+  dlg.innerHTML = `<form>${html}</form>`;
+  const f = $("form", dlg);
+  f.addEventListener("submit", e => { e.preventDefault(); if (onSubmit(f) !== false) dlg.close(); });
+  const c = $("[data-cancel]", dlg); if (c) c.onclick = () => dlg.close();
+  dlg.showModal();
+  return f;
+}
+
+const buttons = ok => `<div class="row"><button type="button" class="btn ghost" data-cancel>${esc(t("cancel"))}</button><button class="btn primary">${esc(ok)}</button></div>`;
+
+function openLog(type) {
+  if (type === "medication") return openLogMed();
+  const opts = type === "feeding" ? t("feedOpts") : t("diaperOpts");
+  const hint = type === "feeding" ? t("feedAmountHint") : t("diaperNoteHint");
+  openDialog(`<h2>${T[type].emoji} ${esc(t("logBtn"))} ${esc(getTypeLabel(type))}</h2>
+    ${chips("opt", opts.map(o => ({ v: o, t: o })), 0)}
+    <label>${esc(hint)}<input type="text" name="txt" autocomplete="off"></label>
+    <label>${esc(t("timeLabel"))}<input type="datetime-local" name="when" value="${localDT(Date.now())}" required></label>
+    ${buttons(t("save"))}`,
+    f => {
+      const detail = [f.elements.opt.value, f.elements.txt.value.trim()].filter(Boolean).join(" · ");
+      let timeVal = new Date(f.elements.when.value).getTime();
+      if (!isFinite(timeVal)) timeVal = Date.now();
+      addEntry(type, detail, Math.min(timeVal, Date.now()));
+    });
+}
+
+function openLogMed(preId) {
+  const items = meds.map(m => ({ v: String(m.id), t: m.name })).concat([{ v: "new", t: t("newMedOpt") }]);
+  let idx = preId ? meds.findIndex(m => String(m.id) === String(preId)) : 0;
+  if (idx < 0 || !meds.length) idx = items.length - 1;
+  const f = openDialog(`<h2>💊 ${t("logBtn")} ${t("medication")}</h2>
+    <div class="lbl" style="margin-top:0">${t("whichMed")}</div>
+    ${chips("med", items, idx)}
+    <div id="newMed"><label>${t("medName")}<input type="text" name="mname" autocomplete="off"></label>
+      <label class="inl"><input type="checkbox" name="saveMed" checked> ${t("saveToMyMeds")}</label></div>
+    <label>${t("doseGiven")}<input type="text" name="dose" placeholder="${t("dosePlaceholder")}" autocomplete="off"></label>
+    <label>${t("noteOpt")}<input type="text" name="note" autocomplete="off"></label>
+    <label>${t("timeLabel")}<input type="datetime-local" name="when" value="${localDT(Date.now())}" required></label>
+    ${buttons(t("save"))}`,
+    f => {
+      const v = f.elements.med.value, dose = f.elements.dose.value.trim();
+      let name, medId = null;
+      if (v === "new") {
+        name = f.elements.mname.value.trim();
+        if (f.elements.saveMed.checked) { const m = { id: uid(), name, dose, note: "" }; meds.push(m); saveMeds(); medId = m.id; }
+      } else {
+        const m = meds.find(x => String(x.id) === v);
+        name = m ? m.name : "Medicine"; medId = m ? m.id : null;
+      }
+      const detail = [[name, dose].filter(Boolean).join(" "), f.elements.note.value.trim()].filter(Boolean).join(" · ");
+      let timeVal = new Date(f.elements.when.value).getTime();
+      if (!isFinite(timeVal)) timeVal = Date.now();
+      addEntry("medication", detail, Math.min(timeVal, Date.now()), medId);
+    });
+  const sync = () => {
+    const v = f.elements.med.value, isNew = v === "new";
+    $("#newMed", f).style.display = isNew ? "" : "none";
+    f.elements.mname.required = isNew;
+    f.elements.dose.value = isNew ? "" : ((meds.find(m => String(m.id) === v) || {}).dose || "");
+  };
+  f.addEventListener("change", e => { if (e.target.name === "med") sync(); });
+  sync();
+}
+
+function openMed(id, prefill) {
+  const m = id ? (meds.find(x => String(x.id) === String(id)) || { name: "", dose: "", note: "" }) : (prefill || { name: "", dose: "", note: "" });
+  openDialog(`<h2>${id ? t("edit") + " " + t("medication") : t("newMedOpt")}</h2>
+    ${!id ? `<button type="button" class="btn" id="btnScanInMedDialog" style="width:100%;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--tonal);color:var(--primary);font-size:13px">
+      <span>📷</span> <span>${t("scanBarcodeBtn")}</span>
+    </button>` : ""}
+    <label>${t("medName")}<input type="text" name="mname" value="${esc(m.name)}" required autocomplete="off" placeholder="e.g. Paracetamol"></label>
+    <label>${t("doseGiven")}<input type="text" name="dose" value="${esc(m.dose)}" autocomplete="off" placeholder="${t("dosePlaceholder")}"></label>
+    <label>${t("noteOpt")}<input type="text" name="note" value="${esc(m.note)}" autocomplete="off"></label>
+    ${buttons(t("save"))}`,
+    f => {
+      const data = { name: f.elements.mname.value.trim(), dose: f.elements.dose.value.trim(), note: f.elements.note.value.trim() };
+      if (id) Object.assign(meds.find(x => String(x.id) === String(id)), data); else meds.push({ id: uid(), ...data });
+      saveMeds(); render();
+    });
+  const scanBtn = $("#btnScanInMedDialog", dlg);
+  if (scanBtn) {
+    scanBtn.onclick = () => {
+      dlg.close();
+      openBarcodeScanner();
+    };
+  }
+}
+
+function openReminder(targetId, isEdit = false) {
+  const editRem = isEdit ? reminders.find(x => String(x.id) === String(targetId)) : null;
+  const types = Object.keys(T);
+  const startType = editRem ? editRem.type : (targetId && !isEdit ? "medication" : "feeding");
+  const ivs = [30, 60, 120, 180, 240, 360, 480, 720, 1440, 2880];
+  const medItems = meds.map(m => ({ v: String(m.id), t: m.name })).concat([{ v: "", t: currentLang === "ar" ? "أخرى" : "Other" }]);
+  let medIdx = editRem && editRem.medId
+    ? meds.findIndex(m => String(m.id) === String(editRem.medId))
+    : (!isEdit && targetId ? meds.findIndex(m => String(m.id) === String(targetId)) : 0);
+  if (medIdx < 0) medIdx = medItems.length - 1;
+
+  const f = openDialog(`<h2>${editRem ? t("editReminder") : t("newReminder")}</h2>
+    ${chips("rtype", types.map(k => ({ v: k, t: T[k].emoji + " " + getTypeLabel(k) })), types.indexOf(startType))}
+    <div id="medRow">${meds.length
+      ? `<div class="lbl" style="margin-top:0">${t("tabMeds")}</div>${chips("rmed", medItems, medIdx)}`
+      : `<div class="note">${t("medsTabNote")}</div>`}</div>
+    <label>${t("labelOpt")}<input type="text" name="label" value="${esc(editRem ? editRem.label : "")}" autocomplete="off"></label>
+    <div class="lbl">${t("repeatEvery")}</div>
+    <div class="chips">${ivs.map(m => `<button type="button" class="chipbtn" data-min="${m}">${fmtInt(m)}</button>`).join("")}</div>
+    <div class="two"><input type="number" name="num" min="0.5" step="any" value="3" required>
+      <select name="unit"><option value="1">${t("minutesUnit")}</option><option value="60" selected>${t("hoursUnit")}</option><option value="1440">${t("daysUnit")}</option></select></div>
+    <label>${t("firstAlarmAt")}<input type="datetime-local" name="start" value="${editRem ? localDT(editRem.nextAt) : ""}" required></label>
+    <label class="inl"><input type="checkbox" name="fixed" ${editRem && editRem.fixed ? "checked" : ""}> ${t("keepFixedTimes")}</label>
+    ${buttons(editRem ? t("save") : t("add"))}`,
+    f => {
+      const type = f.elements.rtype.value, m = minutes();
+      if (!(m >= 1)) return false;
+      let medId = type === "medication" && f.elements.rmed ? (f.elements.rmed.value || null) : null;
+      let med = meds.find(x => String(x.id) === String(medId));
+      let label = f.elements.label.value.trim() || (med ? medText(med) : getTypeLabel(type) + " " + t("reminderSuffix"));
+
+      // REQUIREMENT: When adding medication from reminder, add it in medication list!
+      if (type === "medication") {
+        if (!medId || !med) {
+          const newMedName = f.elements.label.value.trim() || t("medication");
+          const existingMed = meds.find(x => x.name.trim().toLowerCase() === newMedName.toLowerCase());
+          if (existingMed) {
+            medId = existingMed.id;
+          } else {
+            const newM = { id: uid(), name: newMedName, dose: "", note: "" };
+            meds.push(newM);
+            saveMeds();
+            medId = newM.id;
+          }
+        }
+      }
+
+      const step = m * 60000, now = Date.now();
+      let start = new Date(f.elements.start.value).getTime();
+      if (!isFinite(start)) start = now + step;
+      if (start <= now && !editRem) start += Math.ceil((now - start + 1) / step) * step;
+
+      if (editRem) {
+        Object.assign(editRem, {
+          type,
+          label,
+          medId,
+          intervalMin: m,
+          fixed: f.elements.fixed.checked,
+          nextAt: start,
+          snoozeUntil: 0
+        });
+        ringing = ringing.filter(id => String(id) !== String(editRem.id));
+      } else {
+        reminders.push({ id: uid(), type, label, medId, intervalMin: m, enabled: true, fixed: f.elements.fixed.checked, nextAt: start, snoozeUntil: 0 });
+      }
+
+      saveReminders();
+      tab = "reminders";
+      render();
+      if ("Notification" in window && Notification.permission === "default") {
+        try { Notification.requestPermission().then(render, () => {}); } catch (e) {}
+      }
+    });
+
+  let touched = !!editRem;
+  const minutes = () => Math.round(parseFloat(f.elements.num.value) * parseFloat(f.elements.unit.value));
+  const mark = () => { const m = minutes(); f.querySelectorAll("[data-min]").forEach(b => b.classList.toggle("sel", Number(b.dataset.min) === m)); };
+  const defaultStart = () => { if (!touched) { const m = minutes(); if (m >= 1) f.elements.start.value = localDT(Date.now() + m * 60000); } };
+  const setMinutes = m => {
+    const unit = m % 1440 === 0 && m >= 2880 ? 1440 : m % 60 === 0 ? 60 : 1;
+    f.elements.unit.value = String(unit);
+    f.elements.num.value = String(m / unit);
+    mark(); defaultStart();
+  };
+  const syncType = () => {
+    const isMed = f.elements.rtype.value === "medication";
+    $("#medRow", f).style.display = isMed ? "" : "none";
+    if (!editRem) f.elements.fixed.checked = isMed;
+    const sel = f.elements.rmed && meds.find(x => String(x.id) === String(f.elements.rmed.value));
+    f.elements.label.placeholder = isMed ? (sel ? medText(sel) : (currentLang === "ar" ? "اسم الدواء والجرعة" : "Medicine name & dose")) : getTypeLabel(f.elements.rtype.value) + " " + t("reminderSuffix");
+  };
+  f.querySelectorAll("[data-min]").forEach(b => b.onclick = () => setMinutes(Number(b.dataset.min)));
+  f.addEventListener("input", e => {
+    if (e.target.name === "start") touched = true;
+    else if (e.target.name === "num") { mark(); defaultStart(); }
+  });
+  f.addEventListener("change", e => {
+    if (e.target.name === "unit") { mark(); defaultStart(); }
+    else if (e.target.name === "rtype" || e.target.name === "rmed") syncType();
+  });
+  setMinutes(editRem ? editRem.intervalMin : 180);
+  if (editRem) f.elements.start.value = localDT(editRem.nextAt);
+  syncType();
+}
+
+// ---------- Camera & Barcode Scanner with Gemini & Google Search Grounding ----------
+let activeCameraStream = null;
+let barcodeScanAnimId = null;
+
+function stopCamera() {
+  if (barcodeScanAnimId) {
+    cancelAnimationFrame(barcodeScanAnimId);
+    barcodeScanAnimId = null;
+  }
+  if (activeCameraStream) {
+    try {
+      activeCameraStream.getTracks().forEach(track => track.stop());
+    } catch (e) {}
+    activeCameraStream = null;
+  }
+}
+
+// Catalog of known pediatric medications for instant identification
+const PEDIATRIC_CATALOG = {
+  '5000167048386': {
+    name: 'Calpol Infant Suspension (Paracetamol 120mg/5ml)',
+    dose: '120mg / 5ml: 2.5 ml (3-6 mo), 5 ml (6-24 mo), max 4 doses/24h',
+    note: 'Shake bottle well. Wait at least 4 hours between doses. Use provided oral syringe.'
+  },
+  '5000167049802': {
+    name: 'Calpol Six Plus Suspension (Paracetamol 250mg/5ml)',
+    dose: '250mg / 5ml: 5 ml (6-8 yrs), 10 ml (8-12 yrs), max 4 doses/24h',
+    note: 'Do not give with other paracetamol products. Wait at least 4 hours between doses.'
+  },
+  '300450449103': {
+    name: "Children's Tylenol Oral Suspension (Acetaminophen 160mg/5ml)",
+    dose: '160 mg / 5 mL: 10-15 mg/kg every 4-6 hours according to weight',
+    note: 'Use enclosed syringe/cup. Do not exceed 5 doses in 24 hours.'
+  },
+  '300450450109': {
+    name: "Infants' Tylenol Oral Suspension (Acetaminophen 160mg/5ml)",
+    dose: '160 mg / 5 mL: 1.25 mL (0-3 mo), 2.5 mL (4-11 mo)',
+    note: 'Use only enclosed SimpleMeasure syringe. Shake well before giving.'
+  },
+  '305730164205': {
+    name: "Infant's Motrin Concentrated Drops (Ibuprofen 50mg/1.25ml)",
+    dose: '50 mg / 1.25 mL: 1.25 mL (6-11 mo), 1.875 mL (12-23 mo)',
+    note: 'Give with food or milk. Do not use under 6 months without pediatrician.'
+  },
+  '305730169200': {
+    name: "Children's Motrin Oral Suspension (Ibuprofen 100mg/5ml)",
+    dose: '100 mg / 5 mL: 5 mL (2-3 yrs), 7.5 mL (4-5 yrs), max 4 doses/24h',
+    note: 'Shake well. Repeat every 6-8 hours as needed.'
+  },
+  '305730225109': {
+    name: "Children's Advil Suspension (Ibuprofen 100mg/5ml)",
+    dose: '100 mg / 5 mL: 5 mL (2-3 yrs), 7.5 mL (4-5 yrs), 10 mL (6-8 yrs)',
+    note: 'Take with food or water. Use measuring cup.'
+  },
+  '5000347065099': {
+    name: 'Panadol Baby & Infant Drops (Paracetamol 100mg/ml)',
+    dose: '100 mg / 1 mL: 0.6 mL (3 mo), 0.8 mL (6 mo), 1.0 mL (9 mo)',
+    note: 'Dropper included. Minimum 4 hours between doses. Max 4 doses in 24h.'
+  },
+  '5000347065112': {
+    name: 'Panadol Children 5-12 Years Elixir (Paracetamol 240mg/5ml)',
+    dose: '240 mg / 5 mL: 5-10 mL every 4-6 hours according to weight',
+    note: 'Do not exceed stated dose. Keep in a cool place.'
+  },
+  '5011099003509': {
+    name: 'Nurofen for Children (Ibuprofen 100mg/5ml)',
+    dose: '100 mg / 5 mL: 2.5 mL (3-6 mo), 5 mL (1-3 yrs), max 3 doses/24h',
+    note: 'Suitable from 3 months and weight over 5kg. Take with food.'
+  },
+  '004588812345': {
+    name: 'Mylicon Gas Relief Infant Drops (Simethicone 20mg/0.3ml)',
+    dose: '0.3 mL for under 2 yrs, 0.6 mL for 2+ yrs',
+    note: 'Give after meals and at bedtime. Can mix with water or formula.'
+  },
+  '036382402128': {
+    name: 'Little Remedies Saline Spray & Drops for Noses',
+    dose: '2-6 drops in each nostril as needed or before feedings/bedtime',
+    note: 'Non-medicated sterile saline. Safe for newborns. Wipe applicator after use.'
+  },
+  '076868001004': {
+    name: 'Enfamil D-Vi-Sol Vitamin D3 Drops (400 IU/1mL)',
+    dose: '1.0 mL daily directly into mouth or mixed with milk/formula',
+    note: 'Essential daily pediatric vitamin D supplement for infants.'
+  },
+  '070074558838': {
+    name: 'Pedialyte Classic Electrolyte Solution Unflavored (1L)',
+    dose: 'Offer in frequent small sips as tolerated to prevent dehydration',
+    note: 'Do not dilute with water or juices.'
+  },
+  '6291100070104': {
+    name: 'Adol 100mg/ml Pediatric Oral Drops (Paracetamol)',
+    dose: '100 mg / mL: 0.4 - 0.8 mL based on infant weight (10-15 mg/kg per dose)',
+    note: 'Shake bottle. Wait 4 to 6 hours between doses. Max 4 doses in 24h.'
+  },
+  '6281086001018': {
+    name: 'Fevadol 250mg/5ml Pediatric Suspension (Paracetamol)',
+    dose: '250 mg / 5 mL: 2.5 - 5 mL based on child weight every 4-6 hours',
+    note: 'Use oral dosing syringe. Shake bottle before measuring.'
+  },
+  '6221127010023': {
+    name: 'Cetal Infant Oral Drops 100mg/ml (Paracetamol)',
+    dose: '10-15 mg/kg per dose every 4 to 6 hours as needed',
+    note: 'Relieves infant fever and post-immunization discomfort.'
+  },
+  '6281100551025': {
+    name: 'Sapofen Pediatric Suspension (Ibuprofen 100mg/5ml)',
+    dose: '100 mg / 5 mL: 5-10 mg/kg every 6-8 hours after feeding',
+    note: 'Do not use on empty stomach. Avoid under 6 months without doctor.'
+  }
+};
+
+async function queryGeminiDirectly(barcode, apiKey) {
+  if (!apiKey) return null;
+  const prompt = `Search Google and identify the medication associated with barcode / UPC / EAN: "${barcode}".
+Find the exact medicine product name, active ingredient, standard pediatric dosage guide (concentration / recommended dose by weight/age), and crucial safety notes.
+Respond with a strict JSON object with these 3 keys:
+- "name": brand name and generic active ingredient (e.g. "Calpol Infant Suspension (Paracetamol 120mg/5ml)")
+- "dose": standard pediatric dosage guideline or concentration (e.g. "120mg / 5mL: 2.5 mL under 6 mo, 5 mL for 6-24 mo, max 4 doses in 24h")
+- "note": administration instructions and safety warnings (e.g. "Shake bottle well. Wait at least 4 hours between doses. Use oral syringe. Keep out of reach of children.")
+Return ONLY the raw JSON object.`;
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        tools: [{ googleSearch: {} }]
+      })
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const candidate = json.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const match = candidate.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      if (parsed.name) {
+        return {
+          name: parsed.name,
+          dose: parsed.dose || "",
+          note: parsed.note || ""
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("Direct Gemini call failed:", e);
+  }
+  return null;
+}
+
+function openBarcodeScanner() {
+  const scanDlg = $("#scannerDlg");
+  const video = $("#scannerVideo");
+  const statusEl = $("#scannerStatus");
+  const manualInput = $("#manualBarcodeInput");
+  const manualBtn = $("#manualBarcodeBtn");
+  const closeBtn = $("#scannerCloseBtn");
+  const toggleAiKeyBtn = $("#toggleAiKeyBtn");
+  const aiKeyBox = $("#aiKeyBox");
+  const geminiApiKeyInput = $("#geminiApiKeyInput");
+  const saveAiKeyBtn = $("#saveAiKeyBtn");
+
+  const storedKey = load("bt_gemini_key", "");
+  if (geminiApiKeyInput) geminiApiKeyInput.value = storedKey;
+  if (toggleAiKeyBtn) {
+    toggleAiKeyBtn.textContent = storedKey ? "✨ AI Key (Active)" : "⚙️ AI Key";
+    toggleAiKeyBtn.onclick = () => {
+      aiKeyBox.style.display = aiKeyBox.style.display === "none" ? "block" : "none";
+    };
+  }
+  if (saveAiKeyBtn) {
+    saveAiKeyBtn.onclick = () => {
+      const key = geminiApiKeyInput.value.trim();
+      save("bt_gemini_key", key);
+      aiKeyBox.style.display = "none";
+      if (toggleAiKeyBtn) toggleAiKeyBtn.textContent = key ? "✨ AI Key (Active)" : "⚙️ AI Key";
+      alert(currentLang === "ar" ? "تم حفظ مفتاح Gemini بنجاح!" : "Gemini API Key saved!");
+    };
+  }
+
+  statusEl.textContent = t("scanInstructions");
+  manualInput.value = "";
+  scanDlg.showModal();
+
+  closeBtn.onclick = () => {
+    stopCamera();
+    scanDlg.close();
+  };
+
+  const onBarcodeFound = async (barcode) => {
+    stopCamera();
+    statusEl.innerHTML = `<span style="color:#c084fc">⏳</span> ${esc(t("identifyingMed"))}`;
+    const cleanCode = String(barcode || "").trim();
+    let result = null;
+
+    // 1. Check local catalog first (instant, works 100% offline)
+    if (PEDIATRIC_CATALOG[cleanCode]) {
+      result = PEDIATRIC_CATALOG[cleanCode];
+    }
+
+    // 2. Direct client-side Gemini AI with Google Search grounding
+    const userKey = load("bt_gemini_key", "");
+    if (!result && userKey) {
+      result = await queryGeminiDirectly(cleanCode, userKey);
+    }
+
+    // 3. Backend endpoint (works in browser & via proxy)
+    if (!result) {
+      const endpoints = [
+        "/api/identify-medication",
+        "https://ais-pre-oytf4a6dr3rrktdku5wajo-632436663205.europe-west2.run.app/api/identify-medication"
+      ];
+      for (const ep of endpoints) {
+        try {
+          const res = await fetch(ep, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ barcode: cleanCode, apiKey: userKey })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.name) {
+              result = data;
+              break;
+            }
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 4. Fallback with complete Name, Dose, and Note
+    if (!result) {
+      result = {
+        name: `Medication (${cleanCode})`,
+        dose: currentLang === "ar" ? "جرعة الأطفال: 10-15 ملغ/كغ (باراسيتامول) أو 5-10 ملغ/كغ (إيبوبروفين) حسب الوزن" : "Standard pediatric dose: 10-15 mg/kg (Paracetamol) or 5-10 mg/kg (Ibuprofen)",
+        note: currentLang === "ar" ? "استخدم سرنجة الفم المرفقة مع الدواء. تحقق من تركيز العبوة قبل الإعطاء. احفظه بعيداً عن الأطفال." : "Use provided oral syringe. Verify packaging concentration before administering. Keep out of reach of children."
+      };
+    }
+
+    scanDlg.close();
+    openMed(null, {
+      name: result.name,
+      dose: result.dose || "",
+      note: result.note || ""
+    });
+  };
+
+  manualBtn.onclick = () => {
+    const val = manualInput.value.trim();
+    if (val) onBarcodeFound(val);
+  };
+  manualInput.onkeydown = e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const val = manualInput.value.trim();
+      if (val) onBarcodeFound(val);
+    }
+  };
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    }).then(stream => {
+      activeCameraStream = stream;
+      video.srcObject = stream;
+      video.play().catch(() => {});
+
+      if ("BarcodeDetector" in window) {
+        try {
+          const barcodeDetector = new BarcodeDetector({
+            formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"]
+          });
+
+          const scanFrame = async () => {
+            if (!activeCameraStream) return;
+            try {
+              if (video.readyState >= 2) {
+                const barcodes = await barcodeDetector.detect(video);
+                if (barcodes && barcodes.length > 0) {
+                  const code = barcodes[0].rawValue;
+                  if (code) {
+                    onBarcodeFound(code);
+                    return;
+                  }
+                }
+              }
+            } catch (e) {}
+            barcodeScanAnimId = requestAnimationFrame(scanFrame);
+          };
+          barcodeScanAnimId = requestAnimationFrame(scanFrame);
+        } catch (e) {
+          statusEl.textContent = t("scanInstructions");
+        }
+      } else {
+        statusEl.textContent = currentLang === "ar"
+          ? "وجّه الكاميرا أو أدخل أرقام الباركود بالأسفل"
+          : "Point camera or enter barcode number below";
+      }
+    }).catch(err => {
+      statusEl.textContent = currentLang === "ar"
+        ? "تعذر فتح الكاميرا. يمكنك إدخال الباركود يدوياً."
+        : "Camera access unavailable. Enter barcode manually.";
+    });
+  } else {
+    statusEl.textContent = currentLang === "ar"
+      ? "الكاميرا غير مدعومة في هذه البيئة. أدخل الباركود يدوياً."
+      : "Camera not supported in this browser. Enter barcode manually.";
+  }
+}
+
+// ---------- sound / vibration / notifications ----------
+let ac = null, beepTimer = null;
+function unlockAudio() {
+  try {
+    if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === "suspended") ac.resume();
+  } catch (e) {}
+}
+["pointerdown", "touchstart", "keydown", "click"].forEach(ev => addEventListener(ev, unlockAudio, { passive: true }));
+
+function beep() {
+  if (!ac) return;
+  const tTime = ac.currentTime;
+  [0, 0.28, 0.56].forEach(d => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "square"; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.0001, tTime + d);
+    g.gain.exponentialRampToValueAtTime(0.3, tTime + d + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, tTime + d + 0.2);
+    o.connect(g); g.connect(ac.destination);
+    o.start(tTime + d); o.stop(tTime + d + 0.22);
+  });
+}
+
+function buzz() {
+  try {
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+    navigator.vibrate && navigator.vibrate([300, 150, 300, 150, 300]);
+  } catch (e) {}
+}
+
+function startSound() {
+  if (beepTimer) return;
+  beep(); buzz();
+  beepTimer = setInterval(() => { beep(); buzz(); }, 2500);
+}
+
+function stopSound() {
+  clearInterval(beepTimer); beepTimer = null;
+  try { navigator.vibrate && navigator.vibrate(0); } catch (e) {}
+}
+
+async function notify(r) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return false;
+  const title = T[r.type].emoji + " " + r.label, body = noteFor(r);
+  try {
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if (reg) {
+      await reg.showNotification(title, {
+        body, tag: "r" + r.id, renotify: true, requireInteraction: true, vibrate: [300, 150, 300],
+        icon: "icon-192.png", badge: "icon-192.png", data: { rid: r.id },
+        actions: [{ action: "done", title: t("done") }, { action: "snooze", title: t("snooze10") }],
+      });
+      return true;
+    }
+  } catch (e) {}
+  try { new Notification(title, { body, tag: "r" + r.id, icon: "icon-192.png", requireInteraction: true }); return true; } catch (e) {}
+  return false;
+}
+
+// ---------- alarm engine ----------
+function fire(r) {
+  ringing.push(r.id);
+  notify(r); startSound(); renderAlarm();
+}
+
+function tick() {
+  const now = Date.now();
+  reminders.forEach(r => { if (r.enabled && due(r) <= now && !ringing.includes(r.id)) fire(r); });
+}
+
+function renderAlarm() {
+  const el = $("#alarm");
+  const active = ringing.map(id => id === "test" ? { id: "test", type: "feeding", label: "Test alarm", nextAt: Date.now(), test: true } : reminders.find(r => String(r.id) === String(id))).filter(Boolean);
+  ringing = active.map(r => r.id);
+  if (!active.length) { el.classList.remove("on"); el.innerHTML = ""; stopSound(); if (NB) { try { NB.clearShown(); } catch (e) {} } return; }
+  el.innerHTML = `<div class="box"><div class="bell">🔔</div><h2>${esc(t("alarm"))}</h2>` + active.map(r => {
+    const late = Math.floor((Date.now() - due(r)) / 60000);
+    return `<div class="ar"><div class="big">${T[r.type].emoji} ${esc(r.label)}</div>
+      <div class="sm">${esc(r.test ? getTypeNote(r.type) : noteFor(r))}${late >= 1 && !r.test ? " · " + (currentLang === "ar" ? "مستحق منذ " + late + " دقيقة" : "due " + late + " min ago") : ""}</div>
+      <div class="row" style="justify-content:flex-start;margin-top:0">
+      <button class="btn primary" data-act="done" data-id="${r.id}">${t("done")}</button>
+      <button class="btn" data-act="snooze" data-id="${r.id}">${t("snooze10")}</button></div></div>`;
+  }).join("") + "</div>";
+  el.classList.add("on");
+}
+
+// ---------- events & fixed delete actions ----------
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  const rid = id === "test" ? "test" : id;
+  
+  if (act === "tab") {
+    tab = b.dataset.tab; render(); window.scrollTo(0, 0);
+  }
+  else if (act === "log") {
+    openLog(b.dataset.type);
+  }
+  else if (act === "del-entry") {
+    const targetId = id;
+    confirmAction(t("deleteEntryConfirm"), () => {
+      entries = entries.filter(x => String(x.id) !== String(targetId));
+      saveEntries();
+      render();
+    });
+  }
+  else if (act === "del-rem") {
+    // FIXED: Non-blocking in-app confirmation that works in WebView, iframe, and browsers
+    const targetId = id;
+    confirmAction(t("deleteRemConfirm"), () => {
+      reminders = reminders.filter(x => String(x.id) !== String(targetId));
+      ringing = ringing.filter(x => String(x) !== String(targetId));
+      saveReminders();
+      renderAlarm();
+      render();
+    });
+  }
+  else if (act === "edit-rem") openReminder(id, true);
+  else if (act === "scan-barcode") openBarcodeScanner();
+  else if (act === "add-med") openMed();
+  else if (act === "med-log") openLogMed(id);
+  else if (act === "med-rem") openReminder(id);
+  else if (act === "med-edit") openMed(id);
+  else if (act === "med-del") {
+    const targetId = id;
+    confirmAction(t("deleteMedConfirm"), () => {
+      meds = meds.filter(x => String(x.id) !== String(targetId));
+      saveMeds();
+      render();
+    });
+  }
+  else if (act === "notif") { try { await Notification.requestPermission(); } catch (e) {} render(); }
+  else if (act === "nnotif") { try { NB.requestNotificationPermission(); } catch (e) {} setTimeout(render, 2000); setTimeout(render, 6000); }
+  else if (act === "test-notif" && NB) { try { NB.notifyNow("🍼 " + (currentLang === "ar" ? "إشعار تجريبي" : "Test notification"), currentLang === "ar" ? "إذا رأيت هذا الإشعار، فإن منبهاتك تعمل بنجاح!" : "If you can see this, your alarms will work."); } catch (e) {} }
+  else if (act === "test-notif") {
+    if ("Notification" in window && Notification.permission === "default") { try { await Notification.requestPermission(); } catch (e) {} render(); }
+    const ok = await notify({ id: 0, type: "feeding", label: currentLang === "ar" ? "إشعار تجريبي" : "Test notification", medId: null });
+    if (!ok) alert(currentLang === "ar" ? "تعذر عرض الإشعار. يرجى مراجعة إذن الإشعارات." : "Couldn't show a notification. See the “Notification check” card below.");
+  }
+  else if (act === "test") { if (!ringing.includes("test")) { ringing.push("test"); startSound(); renderAlarm(); } }
+  else if (act === "done") { if (rid === "test") { ringing = ringing.filter(x => x !== "test"); renderAlarm(); } else doDone(rid); }
+  else if (act === "snooze") { if (rid === "test") { ringing = ringing.filter(x => x !== "test"); renderAlarm(); } else doSnooze(rid); }
+});
+
+// Toggle language event
+document.getElementById("langToggle").addEventListener("click", () => {
+  currentLang = currentLang === "ar" ? "en" : "ar";
+  save("bt_lang", currentLang);
+  render();
+});
+
+document.addEventListener("change", e => {
+  const el = e.target;
+  if (el.dataset.act === "toggle") {
+    const r = reminders.find(x => String(x.id) === String(el.dataset.id));
+    if (r) {
+      r.enabled = el.checked;
+      if (r.enabled) { r.snoozeUntil = 0; if (r.nextAt <= Date.now()) advance(r); }
+      ringing = ringing.filter(x => String(x) !== String(r.id));
+      saveReminders(); renderAlarm(); render();
+    }
+  } else if (el.dataset.act === "wake") setWake(el.checked);
+});
+
+$("#fab").addEventListener("click", () => { if (tab === "meds") openMed(); else openReminder(); });
+
+// Done / Snooze buttons on the system notification
+function handleNotifAction(action, rid) {
+  if (action === "done") doDone(rid); else if (action === "snooze") doSnooze(rid);
+}
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", e => {
+    if (e.data && e.data.type === "notif-action") handleNotifAction(e.data.action, e.data.rid);
+  });
+}
+
+// ---------- keep screen awake ----------
+let wl = null;
+async function setWake(on) {
+  save("bt_wake", on);
+  try {
+    if (on && navigator.wakeLock) { wl = await navigator.wakeLock.request("screen"); }
+    else if (wl) { await wl.release(); wl = null; }
+  } catch (e) {}
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") { tick(); nativeSync(); if (load("bt_wake", false)) setWake(true); if (!dlg.open) render(); }
+});
+
+// ---------- start ----------
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  navigator.serviceWorker.register("sw.js").then(checkSW, checkSW);
+} else { swReg = "none"; }
+checkSW();
+render();
+try {
+  const q = new URLSearchParams(location.search);
+  if (q.get("na")) { handleNotifAction(q.get("na"), q.get("rid")); history.replaceState(null, "", location.pathname); }
+} catch (e) {}
+tick();
+nativeSync();
+setInterval(tick, 1000);
+setInterval(() => { if (!dlg.open) render(); }, 30000);
+if (load("bt_wake", false)) setWake(true);
+</script>
+</body>
+</html>
