@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9577ea"/>
+      <stop offset="1" stop-color="#4a2ea3"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".3" cy=".22" r=".7">
+      <stop offset="0" stop-color="#fff" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <g transform="translate(256 256) scale(.72) translate(-256 -262)">
+  <g transform="rotate(-14 250 262)">
+    <path d="M236 152 C236 112 244 80 254 80 C264 80 272 112 272 152 Z" fill="#ffd6c2"/>
+    <rect x="202" y="146" width="104" height="46" rx="17" fill="#ff9db5"/>
+    <rect x="212" y="158" width="84" height="7" rx="3.5" fill="#fff" opacity=".35"/>
+    <clipPath id="body"><rect x="186" y="184" width="136" height="248" rx="42"/></clipPath>
+    <rect x="186" y="184" width="136" height="248" rx="42" fill="#ffffff"/>
+    <g clip-path="url(#body)">
+      <path d="M186 282 Q220 264 254 282 T322 282 V436 H186 Z" fill="#e9defc"/>
+    </g>
+    <g stroke="#b7a3ea" stroke-width="6" stroke-linecap="round">
+      <line x1="288" y1="226" x2="308" y2="226"/>
+      <line x1="298" y1="246" x2="308" y2="246"/>
+      <line x1="288" y1="266" x2="308" y2="266"/>
+    </g>
+    <g transform="translate(254 350) scale(.82) translate(-256 -352)">
+      <path d="M256 394 C212 362 206 332 225 318 C240 307 254 314 256 327 C258 314 272 307 287 318 C306 332 300 362 256 394 Z" fill="#ff6f91"/>
+      <path d="M232 328 C236 322 244 321 248 326" stroke="#fff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".55"/>
+    </g>
+  </g>
+  <g>
+    <circle cx="384" cy="392" r="58" fill="#ffffff"/>
+    <circle cx="384" cy="392" r="58" fill="none" stroke="#ffc94d" stroke-width="12"/>
+    <path d="M384 392 V360 M384 392 L405 404" stroke="#4a2ea3" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <circle cx="384" cy="392" r="6" fill="#4a2ea3"/>
+  </g>
+  <path transform="translate(404 112) scale(36)" opacity="0.95" fill="#fff" d="M0 -1 C0.1 -0.2 0.2 -0.1 1 0 C0.2 0.1 0.1 0.2 0 1 C-0.1 0.2 -0.2 0.1 -1 0 C-0.2 -0.1 -0.1 -0.2 0 -1Z"/>
+  <path transform="translate(112 168) scale(22)" opacity="0.85" fill="#fff" d="M0 -1 C0.1 -0.2 0.2 -0.1 1 0 C0.2 0.1 0.1 0.2 0 1 C-0.1 0.2 -0.2 0.1 -1 0 C-0.2 -0.1 -0.1 -0.2 0 -1Z"/>
+  <path transform="translate(452 210) scale(13)" opacity="0.7" fill="#fff" d="M0 -1 C0.1 -0.2 0.2 -0.1 1 0 C0.2 0.1 0.1 0.2 0 1 C-0.1 0.2 -0.2 0.1 -1 0 C-0.2 -0.1 -0.1 -0.2 0 -1Z"/>
+</g>
+</svg>
