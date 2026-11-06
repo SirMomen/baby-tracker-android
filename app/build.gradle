@@ -1,0 +1,61 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+
+android {
+    namespace 'com.babytracker'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.babytracker"
+        minSdk 24
+        targetSdk 34
+        versionCode 6
+        versionName "2.4"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        release {
+            // Placeholder: configure your release keystore parameters below
+            storeFile file("keystore/release.jks")
+            storePassword "YOUR_KEYSTORE_PASSWORD"
+            keyAlias "YOUR_KEY_ALIAS"
+            keyPassword "YOUR_KEY_PASSWORD"
+            v1SigningEnabled true
+            v2SigningEnabled true
+            v3SigningEnabled true
+        }
+        debug {
+            // Default Android debug keystore
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+}

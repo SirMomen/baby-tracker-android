@@ -15,9 +15,23 @@ android {
         versionName = "2.4"
     }
 
+    signingConfigs {
+        create("release") {
+            // Replace with your keystore path and credentials
+            storeFile = file("keystore/release.jks")
+            storePassword = "YOUR_KEYSTORE_PASSWORD"
+            keyAlias = "YOUR_KEY_ALIAS"
+            keyPassword = "YOUR_KEY_PASSWORD"
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
