@@ -1745,31 +1745,25 @@ function openBarcodeScanner() {
     }
   };
 
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: "environment" },
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      }
-    }).then(stream => {
+  const startCameraScan = (videoConstraints) => {
+    navigator.mediaDevices.getUserMedia({ video: videoConstraints }).then(stream => {
       activeCameraStream = stream;
       video.srcObject = stream;
       video.play().catch(() => {});
 
       if ("BarcodeDetector" in window) {
-        try {
-          const barcodeDetector = new BarcodeDetector({
-            formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"]
-          });
+        BarcodeDetector.getSupportedFormats().then(supportedFormats => {
+          const desiredFormats = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code", "data_matrix"];
+          const formats = supportedFormats && supportedFormats.length ? desiredFormats.filter(f => supportedFormats.includes(f)) : [];
+          const detector = formats.length ? new BarcodeDetector({ formats }) : new BarcodeDetector();
 
           const scanFrame = async () => {
             if (!activeCameraStream) return;
             try {
               if (video.readyState >= 2) {
-                const barcodes = await barcodeDetector.detect(video);
+                const barcodes = await detector.detect(video);
                 if (barcodes && barcodes.length > 0) {
-                  const code = barcodes[0].rawValue;
+                  const code = barcodes[0].rawValue || barcodes[0].rawValue === 0 ? String(barcodes[0].rawValue) : "";
                   if (code) {
                     onBarcodeFound(code);
                     return;
@@ -1780,19 +1774,28 @@ function openBarcodeScanner() {
             barcodeScanAnimId = requestAnimationFrame(scanFrame);
           };
           barcodeScanAnimId = requestAnimationFrame(scanFrame);
-        } catch (e) {
+        }).catch(() => {
           statusEl.textContent = t("scanInstructions");
-        }
+        });
       } else {
         statusEl.textContent = currentLang === "ar"
           ? "وجّه الكاميرا أو أدخل أرقام الباركود بالأسفل"
           : "Point camera or enter barcode number below";
       }
     }).catch(err => {
-      statusEl.textContent = currentLang === "ar"
-        ? "تعذر فتح الكاميرا. يمكنك إدخال الباركود يدوياً."
-        : "Camera access unavailable. Enter barcode manually.";
+      // Fallback if environment camera constraint failed (try simple true)
+      if (typeof videoConstraints === "object" && videoConstraints.facingMode) {
+        startCameraScan(true);
+      } else {
+        statusEl.textContent = currentLang === "ar"
+          ? "تعذر فتح الكاميرا. يمكنك إدخال الباركود يدوياً."
+          : "Camera access unavailable. Enter barcode manually.";
+      }
     });
+  };
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    startCameraScan({ facingMode: { ideal: "environment" } });
   } else {
     statusEl.textContent = currentLang === "ar"
       ? "الكاميرا غير مدعومة في هذه البيئة. أدخل الباركود يدوياً."
